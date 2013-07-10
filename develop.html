@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Graph lib</title>
+	</head>
+	<body>
+		<!-- <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> -->
+		<script type="text/javascript" src="lib/buckets-minified.js"></script>
+		<script type="text/javascript" src="src/simple-graph.js"></script>
+		<script>
+		(function() {
+			var g = new SG.Graph();
+
+			g.addNode("Sofia");
+			g.addNode("Plovdiv");
+			g.addNode("Varna");
+			g.addNode("Burgas");
+
+			g.connect("Sofia", "Plovdiv");
+			g.connect("Sofia", "Varna");
+			g.connect("Varna", "Burgas");
+			g.connect("Plovdiv", "Burgas");
+
+			var smk = new SG.Node("Samokov", {a:1});
+			g.addNode(smk);
+
+			g.connect("Samokov", "Varna");
+			g.connect("Samokov", "Samokov");
+			g.connect("Samokov", "Samokov");
+			g.connect("Samokov", "Samokov");
+			g.connect("Samokov", "Samokov");
+			g.connect("Samokov", "Samokov");
+			g.detach("Samokov", "Varna");
+
+			console.log(g.getNode("Samokov").options.a);
+			var smk2 = new SG.Node("Samokov", {a:2});
+			g.override = true;
+			g.addNode(smk2);
+			console.log(g.getNode("Samokov").options.a);
+			g.connect("Samokov", "Sofia");
+			g.connect("Samokov", "Plovdiv");
+			g.connect("Samokov", "Varna");
+			g.connect("Samokov", "Burgas");
+			g.removeNode("Samokov");
+
+			try {
+				g.connect("Vidin", "Sofia");
+			} catch(e) {
+				console.log(e);
+			}
+
+			var renderer = new SG.Renderer.ConsoleRenderer(g);
+			renderer.draw();
+		}());
+		</script>
+	</body>
+</html>
