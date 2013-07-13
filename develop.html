@@ -9,7 +9,7 @@
 		<script type="text/javascript" src="src/simple-graph.js"></script>
 		<script>
 		(function() {
-			var g = new SG.Graph();
+			var g = new sg.Graph();
 
 			g.addNode("Sofia");
 			g.addNode("Plovdiv");
@@ -21,7 +21,7 @@
 			g.connect("Varna", "Burgas");
 			g.connect("Plovdiv", "Burgas");
 
-			var smk = new SG.Node("Samokov", {a:1});
+			var smk = new sg.Node("Samokov");
 			g.addNode(smk);
 
 			g.connect("Samokov", "Varna");
@@ -32,24 +32,13 @@
 			g.connect("Samokov", "Samokov");
 			g.detach("Samokov", "Varna");
 
-			console.log(g.getNode("Samokov").options.a);
-			var smk2 = new SG.Node("Samokov", {a:2});
-			g.override = true;
-			g.addNode(smk2);
-			console.log(g.getNode("Samokov").options.a);
 			g.connect("Samokov", "Sofia");
 			g.connect("Samokov", "Plovdiv");
 			g.connect("Samokov", "Varna");
 			g.connect("Samokov", "Burgas");
 			g.removeNode("Samokov");
 
-			try {
-				g.connect("Vidin", "Sofia");
-			} catch(e) {
-				console.log(e);
-			}
-
-			var renderer = new SG.Renderer.ConsoleRenderer(g);
+			var renderer = new sg.Renderer.ConsoleRenderer(g);
 			renderer.draw();
 		}());
 		</script>

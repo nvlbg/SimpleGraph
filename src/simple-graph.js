@@ -1,7 +1,7 @@
 ;(function() {
 	/**
 	 * Enumeration for the direction property of a graph
-	 * @namespace SG
+	 * @namespace sg
 	 * @class DIRECTION
 	 * @static
 	 * @final
@@ -34,7 +34,7 @@
 
 	/**
 	 * Represents a graph node
-	 * @namespace SG
+	 * @namespace sg
 	 * @class Node
 	 * @constructor
 	 * @param {String} id Node's identificator.
@@ -74,14 +74,15 @@
 		 * Custom object for storing arbitrary data
 		 * @property options
 		 * @type Object
+		 * @defaut {}
 		 */
-		this.options  = options;
+		this.options  = options || {};
 		
 		/**
 		 * The graph of which the node is a member or undefined
 		 * @private
 		 * @property _graph
-		 * @type {SG.Graph|undefined}
+		 * @type {sg.Graph|undefined}
 		 * @default undefined
 		 */
 		this._graph   = undefined;
@@ -93,26 +94,37 @@
 		 * @type buckets.Set
 		 */
 		var edges = new buckets.Set(function(edge) {
-			return edge.node ? edge.node.getId() : edge.getId();
+			return edge.getSource().getId() + "->" + edge.getTarget().getId();
 		});
 
 		/**
+		 * @private
 		 * @method addEdge
-		 * @param edge {SG.Edge}
+		 * @param edge {sg.Edge}
 		 */
 		this.addEdge = function(edge) {
+			if (!(edge instanceof sg.Edge)) {
+				throw "edge is not sg.Edge.";
+			}
+
 			edges.add(edge);
 		};
 
 		/**
+		 * @private
 		 * @method removeEdge
-		 * @param edge {SG.Edge}
+		 * @param edge {sg.Edge}
 		 */
 		this.removeEdge = function(edge) {
+			if (!(edge instanceof sg.Edge)) {
+				throw "edge is not sg.Edge.";
+			}
+
 			edges.remove(edge);
 		};
 
 		/**
+		 * @private
 		 * @method removeAllEdges
 		 */
 		this.removeAllEdges = function() {
@@ -120,6 +132,7 @@
 		};
 
 		/**
+		 * @private
 		 * @method getEdges
 		 * @return {Array}
 		 */
@@ -129,15 +142,15 @@
 
 		/**
 		 * @method addToGraph
-		 * @param graph {SG.Graph}
+		 * @param graph {sg.Graph}
 		 */
 		this.addToGraph = function(g) {
 			if (this._graph !== undefined) {
 				throw "This node is already in a graph.";
 			}
 
-			if (!(g instanceof SG.Graph)) {
-				throw "The passed parameter is not a SG.Graph.";
+			if (!(g instanceof sg.Graph)) {
+				throw "The passed parameter is not a sg.Graph.";
 			}
 
 			g.addNode(this);
@@ -147,20 +160,20 @@
 		 * @method removeFromGraph
 		 */
 		this.removeFromGraph = function() {
-			if (this._graph !== undefined) {
+			if (this._graph === undefined) {
 				throw "The node is not in a graph.";
 			}
 
-			g.removeNode(this);
+			this._graph.removeNode(this);
 		};
 
 		/**
 		 * @method connect
-		 * @param node {SG.Node}
+		 * @param node {sg.Node}
 		 * @param [options] {Object}
 		 */
 		this.connect = function(node, options) {
-			if (this._graph !== undefined) {
+			if (this._graph === undefined) {
 				throw "The node is not in a graph.";
 			}
 
@@ -169,10 +182,10 @@
 
 		/**
 		 * @method detach
-		 * @param node {SG.Node}
+		 * @param node {sg.Node}
 		 */
 		this.detach = function(node) {
-			if (this._graph !== undefined) {
+			if (this._graph === undefined) {
 				throw "The node is not in a graph.";
 			}
 
@@ -182,13 +195,13 @@
 
 	/**
 	 * Represents a graph edge (e.g. connection of 2 nodes in a graph)
-	 * @namespace SG
+	 * @namespace sg
 	 * @class Edge
 	 * @constructor
-	 * @param {SG.Node} source Source node
-	 * @param {SG.Node} target Target node
+	 * @param {sg.Node} source Source node
+	 * @param {sg.Node} target Target node
 	 * @param {Object} [options] Optional data object the user can store in the edge
-	 * 							 (can be accessed via the SG.Edge.options property).
+	 * 							 (can be accessed via the sg.Edge.options property).
 	 * 							 The options object may have the following properties
 	 * 							 (and/or any of your own):
 	 * 		@param {Number} [options.weight=1.0] in case of weighted graph, this is the edge's weight.
@@ -196,7 +209,7 @@
 	 * 												  If false, the edge has no direction
 	 */
 	function Edge(a, b, options) {
-		if (!(a instanceof SG.Node) || !(b instanceof SG.Node)) {
+		if (!(a instanceof sg.Node) || !(b instanceof sg.Node)) {
 			throw "Params are not nodes.";
 		}
 
@@ -216,7 +229,7 @@
 		 * The graph of which the edge is a member or undefined
 		 * @private
 		 * @property _graph
-		 * @type {SG.Graph|undefined}
+		 * @type {sg.Graph|undefined}
 		 * @default undefined
 		 */
 		this._graph   = undefined;
@@ -225,7 +238,7 @@
 		 * The first end of the edge
 		 * @private
 		 * @property source
-		 * @type SG.Node
+		 * @type sg.Node
 		 */
 		var source = a;
 		
@@ -233,7 +246,7 @@
 		 * The second end of the edge
 		 * @private
 		 * @property target
-		 * @type SG.Node
+		 * @type sg.Node
 		 */
 		var target = b;
 
@@ -259,13 +272,14 @@
 		 * Custom object for storing arbitrary data
 		 * @property options
 		 * @type Object
+		 * @default {}
 		 */
-		this.options = options;
+		this.options = options || {};
 
 		/**
 		 * Getter for the source node
 		 * @method getSource
-		 * @return {SG.Node} the source node of the edge
+		 * @return {sg.Node} the source node of the edge
 		 */
 		this.getSource = function() {
 			return source;
@@ -274,7 +288,7 @@
 		/**
 		 * Getter for the target node
 		 * @method getTarget
-		 * @return {SG.Node} the target node of the edge
+		 * @return {sg.Node} the target node of the edge
 		 */
 		this.getTarget = function() {
 			return target;
@@ -283,11 +297,11 @@
 
 	/**
 	 * Represents a graph
-	 * @namespace SG
+	 * @namespace sg
 	 * @class Graph
 	 * @constructor
 	 * @param {Object} [options] Optional data object the user can store in the graph.
-	 * 		@param {SG.DIRECTION} [options.direction] the direction of the graph
+	 * 		@param {sg.DIRECTION} [options.direction] the direction of the graph
 	 * 		@param {Boolean} [options.weighted] indicates if the graph is weighted or not
 	 * 		@param {Boolean} [options.override]
 	 */
@@ -297,9 +311,9 @@
 		}
 
 		if (options && options.direction &&
-			options.direction !== SG.DIRECTION.UNDIRECTED &&
-			options.direction !== SG.DIRECTION.DIRECTED &&
-			options.direction !== SG.DIRECTION.MIXED) {
+			options.direction !== sg.DIRECTION.UNDIRECTED &&
+			options.direction !== sg.DIRECTION.DIRECTED &&
+			options.direction !== sg.DIRECTION.MIXED) {
 			throw "Unknown direction.";
 		}
 
@@ -314,10 +328,10 @@
 		/**
 		 * The direction of the graph
 		 * @property direction
-		 * @type SG.DIRECTION
-		 * @default SG.DIRECTION.UNDIRECTED
+		 * @type sg.DIRECTION
+		 * @default sg.DIRECTION.UNDIRECTED
 		 */
-		this.direction = options && options.direction ? options.direction : SG.DIRECTION.UNDIRECTED;
+		this.direction = options && options.direction ? options.direction : sg.DIRECTION.UNDIRECTED;
 
 		/**
 		 * Indicates if the graph is weighted or not
@@ -334,6 +348,14 @@
 		 */
 		this.override  = options && options.override  ? options.override  : false;
 		
+		/**
+		 * Custom object for storing arbitrary data
+		 * @property options
+		 * @type Object
+		 * @default {}
+		 */
+		this.options = options || {};
+
 		/**
 		 * A dictionary containing the graph nodes
 		 * @private
@@ -354,10 +376,10 @@
 
 		/**
 		 * @method addNode
-		 * @param node {SG.Node}
+		 * @param node {String|sg.Node}
 		 */
 		this.addNode = function(node) {
-			if ((typeof node !== "string" || node === "") && !(node instanceof SG.Node)) {
+			if ((typeof node !== "string" || node === "") && !(node instanceof sg.Node)) {
 				throw "Invalid node: " + node;
 			}
 
@@ -367,11 +389,11 @@
 					  "(Use the option override if needed)";
 			}
 
-			if ( node instanceof SG.Node && this._graph !== undefined ) {
+			if ( node instanceof sg.Node && node._graph !== undefined ) {
 				throw "The node \"" + node.getId() + "\" is in another graph.";
 			}
 
-			node = node instanceof SG.Node ? node : new SG.Node(id);
+			node = node instanceof sg.Node ? node : new sg.Node(id);
 
 			this.nodes.set(id, node);
 			node._graph = this;
@@ -379,16 +401,16 @@
 
 		/**
 		 * @method removeNode
-		 * @param node {SG.Node}
+		 * @param node {sg.Node}
 		 */
 		this.removeNode = function(node) {
-			if ((typeof node !== "string" || node === "") && !(node instanceof SG.Node)) {
+			if ((typeof node !== "string" || node === "") && !(node instanceof sg.Node)) {
 				throw "Invalid node.";
 			}
 
 			var id = node.getId ? node.getId() : node;
 			if (this.nodes.get(id) === undefined ||
-				(node instanceof SG.Node && this.nodes.get(id) !== node)) {
+				(node instanceof sg.Node && this.nodes.get(id) !== node)) {
 				throw "The passed node is not in this graph.";
 			}
 
@@ -399,11 +421,11 @@
 
 				if (source === node || target === node) {
 					if (source !== node) {
-						source.removeEdge(node);
+						source.removeEdge(edge);
 					}
 
 					if (target !== node) {
-						target.removeEdge(node);
+						target.removeEdge(edge);
 					}
 
 					this.edges.remove(edge);
@@ -417,27 +439,29 @@
 
 		/**
 		 * @method connect
-		 * @param keyA {String}
-		 * @param keyB {String}
+		 * @param keyA {sg.Node|String}
+		 * @param keyB {sg.Node|String}
 		 * @param [options] {Object}
 		 */
 		this.connect = function(a, b, options) {
-			if (this.nodes.get(a) === undefined) {
-				throw "Node \"" + a + "\" isn't in the graph.";
+			var aId = a.getId ? a.getId() : a;
+			var bId = b.getId ? b.getId() : b;
+			if (this.nodes.get(aId) === undefined) {
+				throw "Node \"" + aId + "\" isn't in the graph.";
 			}
 
-			if (this.nodes.get(b) === undefined) {
-				throw "Node \"" + b + "\" isn't in the graph.";
+			if (this.nodes.get(bId) === undefined) {
+				throw "Node \"" + bId + "\" isn't in the graph.";
 			}
 
 			if (options && !(typeof options === "object")) {
 				throw "Options must be an object.";
 			}
 
-			var source = this.nodes.get(a);
-			var target = this.nodes.get(b);
+			var source = this.nodes.get(aId);
+			var target = this.nodes.get(bId);
 
-			var edge = new SG.Edge(source, target, options);
+			var edge = new sg.Edge(source, target, options);
 			edge._graph = this;
 			source.addEdge(edge);
 			target.addEdge(edge);
@@ -446,20 +470,22 @@
 
 		/**
 		 * @method detach
-		 * @param keyA {String}
-		 * @param keyB {String}
+		 * @param keyA {sg.Node|String}
+		 * @param keyB {sg.Node|String}
 		 */
 		this.detach = function(a, b) {
-			if (this.nodes.get(a) === undefined) {
-				throw "Node \"" + a + "\" isn't in the graph.";
+			var aId = a.getId ? a.getId() : a;
+			var bId = b.getId ? b.getId() : b;
+			if (this.nodes.get(aId) === undefined) {
+				throw "Node \"" + aId + "\" isn't in the graph.";
 			}
 
-			if (this.nodes.get(b) === undefined) {
-				throw "Node \"" + b + "\" isn't in the graph.";
+			if (this.nodes.get(bId) === undefined) {
+				throw "Node \"" + bId + "\" isn't in the graph.";
 			}
 
-			var nodeA = this.nodes.get(a);
-			var nodeB = this.nodes.get(b);
+			var nodeA = this.nodes.get(aId);
+			var nodeB = this.nodes.get(bId);
 
 			var first, second;
 			this.edges.forEach(function(edge) {
@@ -481,39 +507,60 @@
 		};
 	}
 
+	function AbstractRenderer(graph) {
+		this.refresh = function() { throw "Unimplemented method."; };
+		this.draw    = function() { throw "Unimplemented method."; };
+	}
+
+	function ConsoleRenderer(g) {
+		if (!(g instanceof sg.Graph)) {
+			throw "I don't know how to render " + g;
+		}
+
+		var graph    = g;
+		this.refresh = function() { return; };
+		this.draw    = function() {
+			graph.nodes.forEach(function(key, node) {
+				var line = [key, ": "];
+				var edges = node.getEdges();
+				edges.forEach(function(edge) {
+					var c;
+					if (node === edge.getSource()) {
+						c = edge.getTarget();
+					} else if (node === edge.getTarget() &&
+							   graph.direction === sg.DIRECTION.UNDIRECTED) {
+						c = edge.getSource();
+					}
+
+					if (c) {
+						line.push(c.getId())
+						line.push(",");
+					}
+				});
+				line.pop();
+				console.log(line.join(""));
+			});
+		};
+	}
+
+	ConsoleRenderer.prototype = new AbstractRenderer();
+
 	/**
 	 * Simple Graph - a library for representing graphs
-	 * @module SG
+	 * @module sg
 	 * @requires Buckets
 	 */
-	var SG = {
+	var sg = {
 		DIRECTION: DIRECTION,
 		Node: Node,
 		Edge: Edge,
 		Graph: Graph,
 
 		Renderer: {
-			ConsoleRenderer: function(graph) {
-				this.graph = graph;
-				this.draw = function() {
-					if (!(graph instanceof SG.Graph)) {
-						throw "I don't know how to render " + graph;
-					}
-
-					graph.nodes.forEach(function(key, node) {
-						var line = [key, ": "];
-						var edges = node.getEdges();
-						edges.forEach(function(edge) {
-							line.push(edge.node.getId())
-							line.push(",");
-						});
-						line.pop();
-						console.log(line.join(""));
-					});
-				};
-			}
+			AbstractRenderer: AbstractRenderer,
+			ConsoleRenderer : ConsoleRenderer
 		}
 	};
 	
-	window.SG = window.SG || SG;
+	window.sg = window.sg || sg;
 }());
