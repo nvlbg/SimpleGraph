@@ -17,27 +17,17 @@
 			g.addNode("Burgas");
 
 			g.connect("Sofia", "Plovdiv");
-			g.connect("Sofia", "Varna");
+			g.connect("Sofia", "Varna", {
+				prop: 0
+			});
 			g.connect("Varna", "Burgas");
 			g.connect("Plovdiv", "Burgas");
 
-			var smk = new sg.Node("Samokov");
-			g.addNode(smk);
+			console.log(g.getNode("Varna").getEdges()[0].options.prop);
 
-			g.connect("Samokov", "Varna");
-			g.connect("Samokov", "Samokov");
-			g.connect("Samokov", "Samokov");
-			g.connect("Samokov", "Samokov");
-			g.connect("Samokov", "Samokov");
-			g.connect("Samokov", "Samokov");
-			g.detach("Samokov", "Varna");
+			g.getNode("Sofia").getEdges()[1].options.prop=1;
 
-			g.connect("Samokov", "Sofia");
-			g.connect("Samokov", "Plovdiv");
-			g.connect("Samokov", "Varna");
-			g.connect("Samokov", "Burgas");
-			g.removeNode("Samokov");
-
+			console.log(g.getNode("Varna").getEdges()[0].options.prop);
 			var renderer = new sg.Renderer.ConsoleRenderer(g);
 			renderer.draw();
 		}());

@@ -1,5 +1,17 @@
 (function() {
-	describe('node creation', function() {
+	describe('sg.DIRECTION', function() {
+		it('is enum', function() {
+			expect(sg.DIRECTION.UNDIRECTED).toBeDefined();
+			expect(sg.DIRECTION.DIRECTED).toBeDefined();
+			expect(sg.DIRECTION.MIXED).toBeDefined();
+
+			expect(sg.DIRECTION.UNDIRECTED).not.toBe(sg.DIRECTION.DIRECTED);
+			expect(sg.DIRECTION.UNDIRECTED).not.toBe(sg.DIRECTION.MIXED);
+			expect(sg.DIRECTION.DIRECTED).not.toBe(sg.DIRECTION.MIXED);
+		});
+	});
+
+	describe('sg.Node', function() {
 		it('instanciating', function() {
 			var nonStringId1 = function() {
 				return new sg.Node(2);
@@ -74,7 +86,7 @@
 			var edge = new sg.Edge(node, node2);
 			
 			node.addEdge(edge);
-			expect(node.getEdges()[0]).toBe(edge);
+			expect(node.getEdges()[0].edge).toBe(edge);
 		});
 
 		it('removeEdge', function() {
@@ -109,11 +121,11 @@
 			node.removeEdge(edge);
 			node2.removeEdge(edge);
 
-			expect(node.getEdges()[0]).toBe(edge2);
-			expect(node2.getEdges()[0]).toBe(edge3);
+			expect(node.getEdges()[0].edge).toBe(edge2);
+			expect(node2.getEdges()[0].edge).toBe(edge3);
 			expect(node3.getEdges().length).toBe(2);
-			expect(node3.getEdges()[0]).toBe(edge2);
-			expect(node3.getEdges()[1]).toBe(edge3);
+			expect(node3.getEdges()[0].edge).toBe(edge2);
+			expect(node3.getEdges()[1].edge).toBe(edge3);
 		});
 
 		it('removeAllEdges', function() {
@@ -147,16 +159,16 @@
 			
 			var edges = node.getEdges();
 			expect(edges.length).toBe(2);
-			expect(edges[0]).toBe(edge);
-			expect(edges[1]).toBe(edge2);
+			expect(edges[0].edge).toBe(edge);
+			expect(edges[1].edge).toBe(edge2);
 
 			node.addEdge(edge3);
 			edges = node.getEdges();
 
 			expect(edges.length).toBe(3);
-			expect(edges[0]).toBe(edge);
-			expect(edges[1]).toBe(edge2);
-			expect(edges[2]).toBe(edge3);
+			expect(edges[0].edge).toBe(edge);
+			expect(edges[1].edge).toBe(edge2);
+			expect(edges[2].edge).toBe(edge3);
 		});
 
 		it('addToGraph', function() {
@@ -237,8 +249,8 @@
 
 			n.connect(n2);
 
-			expect(n.getEdges()[0].getTarget()).toBe(n2);
-			expect(n2.getEdges()[0].getSource()).toBe(n);
+			expect(n.getEdges()[0].node).toBe(n2);
+			expect(n2.getEdges()[0].node).toBe(n);
 		});
 
 		it('detach', function() {
@@ -269,8 +281,8 @@
 			expect(incorrectNode2).toThrow();
 			expect(incorrectNode3).toThrow();
 
-			expect(n.getEdges()[0].getTarget()).toBe(n2);
-			expect(n2.getEdges()[0].getSource()).toBe(n);
+			expect(n.getEdges()[0].node).toBe(n2);
+			expect(n2.getEdges()[0].node).toBe(n);
 
 			n.detach(n2);
 
@@ -279,11 +291,11 @@
 		});
 	});
 	
-	describe('edge creation', function() {
+	describe('sg.Edge', function() {
 
 	});
 	
-	describe('graph creation', function() {
+	describe('sg.Graph', function() {
 		it('instanciating', function() {
 			var nonObjectOptions = function() {
 				return sg.Graph(123);

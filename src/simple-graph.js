@@ -93,34 +93,53 @@
 		 * @property edges
 		 * @type buckets.Set
 		 */
-		var edges = new buckets.Set(function(edge) {
-			return edge.getSource().getId() + "->" + edge.getTarget().getId();
+		var edges = new buckets.Set(function(edgeConnection) {
+			return edgeConnection.node.getId();
 		});
 
 		/**
 		 * @private
 		 * @method addEdge
-		 * @param edge {sg.Edge}
+		 * @param edge {sg.Edge|sg.Edge.prototype.EdgeConnection}
 		 */
 		this.addEdge = function(edge) {
-			if (!(edge instanceof sg.Edge)) {
-				throw "edge is not sg.Edge.";
+			if (!(edge instanceof sg.Edge) && !(edge instanceof Edge.prototype.EdgeConnection)) {
+				throw "edge should be sg.Edge or sg.Edge.prototype.EdgeConnection";
 			}
 
-			edges.add(edge);
+			if (edge instanceof Edge) {
+				if (edge.getSource() === this) {
+					edges.add(edge.source);
+				}
+
+				if (edge.getTarget() === this) {
+					edges.add(edge.target);
+				}
+			}
+
+			if (edge instanceof Edge.prototype.EdgeConnection) {
+				edges.add(edge);
+			}
 		};
 
 		/**
 		 * @private
 		 * @method removeEdge
-		 * @param edge {sg.Edge}
+		 * @param edge {sg.Edge|sg.Edge.prototype.EdgeConnection}
 		 */
 		this.removeEdge = function(edge) {
-			if (!(edge instanceof sg.Edge)) {
-				throw "edge is not sg.Edge.";
+			if (!(edge instanceof sg.Edge) && !(edge instanceof Edge.prototype.EdgeConnection)) {
+				throw "edge should be sg.Edge or sg.Edge.prototype.EdgeConnection";
 			}
 
-			edges.remove(edge);
+			if (edge instanceof Edge) {
+				edges.remove(edge.source);
+				edges.remove(edge.target);
+			}
+
+			if (edge instanceof Edge.prototype.EdgeConnection) {
+				edges.remove(edge);
+			}
 		};
 
 		/**
@@ -235,9 +254,17 @@
 		this._graph   = undefined;
 
 		/**
+		 * Custom object for storing arbitrary data
+		 * @property options
+		 * @type Object
+		 * @default {}
+		 */
+		this.options = options || {};
+
+		/**
 		 * The first end of the edge
 		 * @private
-		 * @property source
+		 * @attribute source
 		 * @type sg.Node
 		 */
 		var source = a;
@@ -245,7 +272,7 @@
 		/**
 		 * The second end of the edge
 		 * @private
-		 * @property target
+		 * @attribute target
 		 * @type sg.Node
 		 */
 		var target = b;
@@ -267,14 +294,21 @@
 		 * @default false
 		 */
 		this.directed = options && options.directed ? options.directed : false;
+		
+		/**
+		 * @private
+		 * @property source
+		 * @type sg.Edge.prototype.EdgeConnection
+		 */
+		this.source = new Edge.prototype.EdgeConnection(this, target, this.options);
 
 		/**
-		 * Custom object for storing arbitrary data
-		 * @property options
-		 * @type Object
-		 * @default {}
+		 * @private
+		 * @property target
+		 * @type sg.Edge.prototype.EdgeConnection
 		 */
-		this.options = options || {};
+		this.target = this.directed ? undefined : 
+					  new Edge.prototype.EdgeConnection(this, source, this.options);
 
 		/**
 		 * Getter for the source node
@@ -294,6 +328,24 @@
 			return target;
 		};
 	}
+
+	Edge.prototype.EdgeConnection = function(edge, node, options) {
+		if (!(edge instanceof Edge)) {
+			throw "The edge param should be sg.Edge.";
+		}
+
+		if (!(node instanceof Node)) {
+			throw "The node param should be sg.Node.";
+		}
+
+		if (options && typeof options !== "object") {
+			throw "The options param should be object.";
+		}
+
+		this.edge = edge;
+		this.node = node;
+		this.options = options;
+	};
 
 	/**
 	 * Represents a graph
@@ -463,8 +515,8 @@
 
 			var edge = new sg.Edge(source, target, options);
 			edge._graph = this;
-			source.addEdge(edge);
-			target.addEdge(edge);
+			source.addEdge(edge.source);
+			edge.target && target.addEdge(edge.target);
 			this.edges.add(edge);
 		};
 
@@ -524,18 +576,8 @@
 				var line = [key, ": "];
 				var edges = node.getEdges();
 				edges.forEach(function(edge) {
-					var c;
-					if (node === edge.getSource()) {
-						c = edge.getTarget();
-					} else if (node === edge.getTarget() &&
-							   graph.direction === sg.DIRECTION.UNDIRECTED) {
-						c = edge.getSource();
-					}
-
-					if (c) {
-						line.push(c.getId())
-						line.push(",");
-					}
+					line.push(edge.node.getId())
+					line.push(",");
 				});
 				line.pop();
 				console.log(line.join(""));
