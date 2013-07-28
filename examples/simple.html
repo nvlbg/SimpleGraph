@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Simple graph example</title>
+	</head>
+	<body>
+		<script type="text/javascript" src="../lib/buckets-minified.js"></script>
+		<script type="text/javascript" src="../src/simple-graph.js"></script>
+		<script>
+		(function() {
+			var g = new sg.Graph();
+
+			g.addNode("1");
+			g.addNode("2");
+			g.addNode("3");
+			g.addNode("4");
+			g.addNode("5");
+			g.addNode("6");
+
+			g.connect("1", "2");
+			g.connect("2", "3");
+			g.connect("4", "2");
+			g.connect("5", "6");
+			g.connect("3", "6");
+			g.connect("5", "4");
+
+			var renderer = new sg.Renderer.ConsoleRenderer(g);
+			renderer.draw();
+		}());
+		</script>
+	</body>
+</html>
