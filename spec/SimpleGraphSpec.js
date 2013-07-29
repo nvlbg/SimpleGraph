@@ -310,21 +310,6 @@
 					direction: "directed"
 				});
 			};
-			var nonBooleanWeighted1 = function() {
-				return sg.Graph({
-					weighted: 1
-				});
-			};
-			var nonBooleanWeighted2 = function() {
-				return sg.Graph({
-					weighted: "true"
-				});
-			};
-			var nonBooleanWeighted3 = function() {
-				return sg.Graph({
-					weighted: "override"
-				});
-			};
 			var nonBooleanOverride1 = function() {
 				return sg.Graph({
 					override: 1
@@ -340,10 +325,25 @@
 					override: "override"
 				});
 			};
+			var nonBooleanMultigraph1 = function() {
+				return sg.Graph({
+					multigraph: 1
+				});
+			};
+			var nonBooleanMultigraph2 = function() {
+				return sg.Graph({
+					multigraph: "true"
+				});
+			};
+			var nonBooleanMultigraph3 = function() {
+				return sg.Graph({
+					multigraph: "override"
+				});
+			};
 			var nonExceptionalExample = function() {
 				return sg.Graph({
 					direction: sg.DIRECTION.DIRECTED,
-					weighted: true,
+					multigraph: true,
 					override: false
 				});
 			};
@@ -353,13 +353,13 @@
 			expect(incorrectDirection1).toThrow("Unknown direction.");
 			expect(incorrectDirection2).toThrow("Unknown direction.");
 
-			expect(nonBooleanWeighted1).toThrow("weighted should be boolean.");
-			expect(nonBooleanWeighted2).toThrow("weighted should be boolean.");
-			expect(nonBooleanWeighted3).toThrow("weighted should be boolean.");
-
 			expect(nonBooleanOverride1).toThrow("override should be boolean.");
 			expect(nonBooleanOverride2).toThrow("override should be boolean.");
 			expect(nonBooleanOverride3).toThrow("override should be boolean.");
+
+			expect(nonBooleanMultigraph1).toThrow("multigraph should be boolean.");
+			expect(nonBooleanMultigraph2).toThrow("multigraph should be boolean.");
+			expect(nonBooleanMultigraph3).toThrow("multigraph should be boolean.");
 
 			expect(nonExceptionalExample).not.toThrow();
 

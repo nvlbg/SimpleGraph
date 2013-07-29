@@ -1,4 +1,12 @@
 ;(function() {
+	"use strict";
+	var buckets;
+	if (typeof require !== "undefined") {
+		buckets = require("../lib/buckets-minified.js");
+	} else if (typeof window !== "undefined") {
+		buckets = window.buckets;
+	}
+	
 	/**
 	 * Enumeration for the direction property of a graph
 	 * @namespace sg
@@ -32,18 +40,31 @@
 		MIXED: 2
 	};
 
+	var util = {
+		s4: function() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+					   .toString(16)
+					   .substring(1);
+		},
+
+		guid: function() {
+			return util.s4() + util.s4() + '-' + util.s4() + '-' + util.s4() + '-' +
+				   util.s4() + '-' + util.s4() + util.s4() + util.s4();
+		}
+	};
+
 	/**
 	 * Represents a graph node
 	 * @namespace sg
 	 * @class Node
 	 * @constructor
 	 * @param {String} id Node's identificator.
-	 * 					  Two nodes in a graph cannot have the same id.
-	 * 					  ***Must not be empty string***
+	 *                    Two nodes in a graph cannot have the same id.
+	 *                    ***Must not be empty string***
 	 * @param {Object} [options] Optional data object the user can store in the node.
 	 * @example
-	 * 	var a = new Node("Example");
-	 * 	var b = new Node("Data", { index: 10 });
+	 *  var a = new Node("Example");
+	 *  var b = new Node("Data", { index: 10 });
 	 */
 	function Node(id, options) {
 		if (typeof id !== "string" || id === "") {
@@ -70,6 +91,11 @@
 			return _id;
 		};
 
+		var _guid     = util.guid();
+		this.getGUID  = function() {
+			return _guid;
+		};
+
 		/**
 		 * Custom object for storing arbitrary data
 		 * @property options
@@ -94,7 +120,7 @@
 		 * @type buckets.Set
 		 */
 		var edges = new buckets.Set(function(edgeConnection) {
-			return edgeConnection.node.getId();
+			return edgeConnection.edge.getGUID();
 		});
 
 		/**
@@ -220,12 +246,11 @@
 	 * @param {sg.Node} source Source node
 	 * @param {sg.Node} target Target node
 	 * @param {Object} [options] Optional data object the user can store in the edge
-	 * 							 (can be accessed via the sg.Edge.options property).
-	 * 							 The options object may have the following properties
-	 * 							 (and/or any of your own):
-	 * 		@param {Number} [options.weight=1.0] in case of weighted graph, this is the edge's weight.
-	 * 		@param {Boolean} [options.directed=false] If true, the edge is directed source->target.
-	 * 												  If false, the edge has no direction
+	 *                           (can be accessed via the sg.Edge.options property).
+	 *                           The options object may have the following properties
+	 *                           (and/or any of your own):
+	 *        @param {Boolean} [options.directed=false] If true, the edge is directed source->target.
+	 *                                                  If false, the edge has no direction
 	 */
 	function Edge(a, b, options) {
 		if (!(a instanceof sg.Node) || !(b instanceof sg.Node)) {
@@ -236,13 +261,14 @@
 			throw "The options param should be object.";
 		}
 
-		if (options && options.weight && typeof options.weight !== "number") {
-			throw "options.weight must be a number";
-		}
-
 		if (options && options.directed && typeof options.directed !== "boolean") {
 			throw "options.directed must be a boolean";
 		}
+
+		var _guid     = util.guid();
+		this.getGUID  = function() {
+			return _guid;
+		};
 
 		/**
 		 * The graph of which the edge is a member or undefined
@@ -276,15 +302,6 @@
 		 * @type sg.Node
 		 */
 		var target = b;
-
-		/**
-		 * In case of weighted graph, this property holds the weight of the edge.
-		 * @private
-		 * @property weigth
-		 * @type Number
-		 * @default 1.0
-		 */
-		this.weight = options && options.weight ? options.weight : 1.0;
 
 		/**
 		 * If true, the edge is directed source->target. If false, the edge has no direction
@@ -353,9 +370,9 @@
 	 * @class Graph
 	 * @constructor
 	 * @param {Object} [options] Optional data object the user can store in the graph.
-	 * 		@param {sg.DIRECTION} [options.direction] the direction of the graph
-	 * 		@param {Boolean} [options.weighted] indicates if the graph is weighted or not
-	 * 		@param {Boolean} [options.override]
+	 *      @param {sg.DIRECTION} [options.direction] the direction of the graph
+	 *      @param {Boolean} [options.override=false]
+	 *      @param {Boolean} [options.multigraph=false]
 	 */
 	function Graph(options) {
 		if (options && typeof options !== "object") {
@@ -369,12 +386,12 @@
 			throw "Unknown direction.";
 		}
 
-		if (options && options.weighted && typeof options.weighted !== "boolean") {
-			throw "weighted should be boolean.";
-		}
-
 		if (options && options.override && typeof options.override !== "boolean") {
 			throw "override should be boolean.";
+		}
+
+		if (options && options.multigraph && typeof options.multigraph !== "boolean") {
+			throw "multigraph should be boolean.";
 		}
 
 		/**
@@ -386,19 +403,18 @@
 		this.direction = options && options.direction ? options.direction : sg.DIRECTION.UNDIRECTED;
 
 		/**
-		 * Indicates if the graph is weighted or not
-		 * @property weighted
-		 * @type Boolean
-		 * @default false
-		 */
-		this.weighted  = options && options.weighted  ? options.weighted  : false;
-
-		/**
 		 * @property override
 		 * @type Boolean
 		 * @default false
 		 */
 		this.override  = options && options.override  ? options.override  : false;
+
+		/**
+		 * @property mutigraph
+		 * @type Boolean
+		 * @default false
+		 */
+		this.mutigraph  = options && options.mutigraph  ? options.mutigraph  : false;
 		
 		/**
 		 * Custom object for storing arbitrary data
@@ -422,9 +438,15 @@
 		 * @property edges
 		 * @type buckets.Set
 		 */
-		this.edges = new buckets.Set(function(edge) {
-			return edge.getSource().getId() + "->" + edge.getTarget().getId();
-		});
+		if (this.multigraph) {
+			this.edges = new buckets.Bag(function(edge) {
+				return edge.getGUID();
+			});
+		} else {
+			this.edges = new buckets.Set(function(edge) {
+				return edge.getGUID();
+			});
+		}
 
 		/**
 		 * @method addNode
@@ -506,7 +528,7 @@
 				throw "Node \"" + bId + "\" isn't in the graph.";
 			}
 
-			if (options && !(typeof options === "object")) {
+			if (options && typeof options !== "object") {
 				throw "Options must be an object.";
 			}
 
@@ -576,7 +598,7 @@
 				var line = [key, ": "];
 				var edges = node.getEdges();
 				edges.forEach(function(edge) {
-					line.push(edge.node.getId())
+					line.push(edge.node.getId());
 					line.push(",");
 				});
 				line.pop();
@@ -604,5 +626,6 @@
 		}
 	};
 	
-	window.sg = window.sg || sg;
+	if (typeof module !== "undefined") { module.exports = sg; }
+	else if (typeof window !== "undefined") { window.sg = window.sg || sg; }
 }());

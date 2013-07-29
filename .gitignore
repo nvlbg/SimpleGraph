@@ -1,2 +1,9 @@
-# documentation
+# custom built documentation
 src/out/*
+
+node_modules/*
+
+build/*
+
+# grunt generated files
+.grunt/*
