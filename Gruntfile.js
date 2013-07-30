@@ -47,6 +47,7 @@ module.exports = function(grunt) {
 				smarttabs: true,
 				expr: true,
 				strict: true,
+				validthis: true,
 				globals: {
 					buckets: true
 				}

@@ -37,19 +37,20 @@
 		 * @static
 		 * @final
 		 */
-		MIXED: 2
-	};
+		MIXED: 2,
 
-	var util = {
-		s4: function() {
-			return Math.floor((1 + Math.random()) * 0x10000)
-					   .toString(16)
-					   .substring(1);
-		},
-
-		guid: function() {
-			return util.s4() + util.s4() + '-' + util.s4() + '-' + util.s4() + '-' +
-				   util.s4() + '-' + util.s4() + util.s4() + util.s4();
+		/**
+		 * Checks if the passed parameter is a DIRECTION
+		 * @method isDirection
+		 * @static
+		 * @final
+		 * @param dir
+		 * @return {Boolean}
+		 */
+		isDirection: function(dir) {
+			return dir === DIRECTION.UNDIRECTED ||
+				   dir === DIRECTION.DIRECTED ||
+				   dir === DIRECTION.MIXED;
 		}
 	};
 
@@ -80,29 +81,7 @@
 		 * @private
 		 * @property _id
 		 */
-		var _id       = id;
-		
-		/**
-		 * Getter for the node's id
-		 * @method getId
-		 * @return {String} the node's id
-		 */
-		this.getId    = function() {
-			return _id;
-		};
-
-		var _guid     = util.guid();
-		this.getGUID  = function() {
-			return _guid;
-		};
-
-		/**
-		 * Custom object for storing arbitrary data
-		 * @property options
-		 * @type Object
-		 * @defaut {}
-		 */
-		this.options  = options || {};
+		this._id       = id;
 		
 		/**
 		 * The graph of which the node is a member or undefined
@@ -112,131 +91,148 @@
 		 * @default undefined
 		 */
 		this._graph   = undefined;
-
+		
 		/**
 		 * The edges connected to this node
-		 * @private
 		 * @property edges
-		 * @type buckets.Set
+		 * @type buckets.Set of _EdgeConnection
+		 * @readOnly
 		 */
-		var edges = new buckets.Set(function(edgeConnection) {
-			return edgeConnection.edge.getGUID();
+		this.edges = new buckets.Bag(function(edgeConnection) {
+			return edgeConnection.node._id;
 		});
 
 		/**
-		 * @private
-		 * @method addEdge
-		 * @param edge {sg.Edge|sg.Edge.prototype.EdgeConnection}
+		 * Custom object for storing arbitrary data
+		 * @property options
+		 * @type Object
+		 * @defaut {}
 		 */
-		this.addEdge = function(edge) {
-			if (!(edge instanceof sg.Edge) && !(edge instanceof Edge.prototype.EdgeConnection)) {
-				throw "edge should be sg.Edge or sg.Edge.prototype.EdgeConnection";
-			}
-
-			if (edge instanceof Edge) {
-				if (edge.getSource() === this) {
-					edges.add(edge.source);
-				}
-
-				if (edge.getTarget() === this) {
-					edges.add(edge.target);
-				}
-			}
-
-			if (edge instanceof Edge.prototype.EdgeConnection) {
-				edges.add(edge);
-			}
-		};
-
-		/**
-		 * @private
-		 * @method removeEdge
-		 * @param edge {sg.Edge|sg.Edge.prototype.EdgeConnection}
-		 */
-		this.removeEdge = function(edge) {
-			if (!(edge instanceof sg.Edge) && !(edge instanceof Edge.prototype.EdgeConnection)) {
-				throw "edge should be sg.Edge or sg.Edge.prototype.EdgeConnection";
-			}
-
-			if (edge instanceof Edge) {
-				edges.remove(edge.source);
-				edges.remove(edge.target);
-			}
-
-			if (edge instanceof Edge.prototype.EdgeConnection) {
-				edges.remove(edge);
-			}
-		};
-
-		/**
-		 * @private
-		 * @method removeAllEdges
-		 */
-		this.removeAllEdges = function() {
-			edges.clear();
-		};
-
-		/**
-		 * @private
-		 * @method getEdges
-		 * @return {Array}
-		 */
-		this.getEdges = function() {
-			return edges.toArray();
-		};
-
-		/**
-		 * @method addToGraph
-		 * @param graph {sg.Graph}
-		 */
-		this.addToGraph = function(g) {
-			if (this._graph !== undefined) {
-				throw "This node is already in a graph.";
-			}
-
-			if (!(g instanceof sg.Graph)) {
-				throw "The passed parameter is not a sg.Graph.";
-			}
-
-			g.addNode(this);
-		};
-
-		/**
-		 * @method removeFromGraph
-		 */
-		this.removeFromGraph = function() {
-			if (this._graph === undefined) {
-				throw "The node is not in a graph.";
-			}
-
-			this._graph.removeNode(this);
-		};
-
-		/**
-		 * @method connect
-		 * @param node {sg.Node}
-		 * @param [options] {Object}
-		 */
-		this.connect = function(node, options) {
-			if (this._graph === undefined) {
-				throw "The node is not in a graph.";
-			}
-
-			this._graph.connect(this, node, options);
-		};
-
-		/**
-		 * @method detach
-		 * @param node {sg.Node}
-		 */
-		this.detach = function(node) {
-			if (this._graph === undefined) {
-				throw "The node is not in a graph.";
-			}
-
-			this._graph.detach(this, node);
-		};
+		this.options  = options || {};
 	}
+
+	/**
+	 * @private
+	 * @method _addEdge
+	 * @param {sg.Edge|_EdgeConnection} edge
+	 */
+	Node.prototype._addEdge = function(edge) {
+		if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
+			throw "edge should be sg.Edge or _EdgeConnection.";
+		}
+
+		if (edge instanceof Edge) {
+			if (edge._sourceNode === this) {
+				this.edges.add(edge._sourceConnection);
+			}
+
+			if (edge._targetNode === this) {
+				this.edges.add(edge._targetConnection);
+			}
+		}
+
+		if (edge instanceof _EdgeConnection) {
+			this.edges.add(edge);
+		}
+	};
+
+	/**
+	 * @private
+	 * @method _removeEdge
+	 * @param {sg.Edge|_EdgeConnection} edge
+	 */
+	Node.prototype._removeEdge = function(edge) {
+		if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
+			throw "edge should be sg.Edge or _EdgeConnection.";
+		}
+
+		if (edge instanceof Edge) {
+			// remove both, because it can be a self-loop, and no error if not
+			this.edges.remove(edge._sourceConnection);
+			this.edges.remove(edge._targetConnection);
+		}
+
+		if (edge instanceof _EdgeConnection) {
+			this.edges.remove(edge);
+		}
+	};
+
+	/**
+	 * @private
+	 * @method _removeAllEdges
+	 */
+	Node.prototype._removeAllEdges = function() {
+		this.edges.clear();
+	};
+
+	/**
+	 * @method addToGraph
+	 * @param {sg.Graph} graph
+	 */
+	Node.prototype.addToGraph = function(g) {
+		if (this._graph !== undefined) {
+			throw "This node is already in a graph.";
+		}
+
+		if (!(g instanceof Graph)) {
+			throw "The passed parameter is not a sg.Graph.";
+		}
+
+		g.addNode(this);
+	};
+
+	/**
+	 * @method removeFromGraph
+	 */
+	Node.prototype.removeFromGraph = function() {
+		if (this._graph === undefined) {
+			throw "The node is not in a graph.";
+		}
+
+		this._graph.removeNode(this);
+	};
+
+	/**
+	 * @method connect
+	 * @param {sg.Node|String} node
+	 * @param {Object} [options]
+	 */
+	Node.prototype.connect = function(node, options) {
+		if (this._graph === undefined) {
+			throw "The node is not in a graph.";
+		}
+
+		this._graph.connect(this, node, options);
+	};
+
+	/**
+	 * @method detach
+	 * @param {sg.Node|String} node
+	 */
+	Node.prototype.detach = function(node) {
+		if (this._graph === undefined) {
+			throw "The node is not in a graph.";
+		}
+
+		this._graph.detach(this, node);
+	};
+
+	/**
+	 * Getter for the node's id
+	 * @method getId
+	 * @return {String} the node's id
+	 */
+	Node.prototype.getId = function() {
+		return this._id;
+	};
+
+	/**
+	 * @method getEdges
+	 * @return {Array}
+	 */
+	Node.prototype.getEdges = function() {
+		return this.edges.toArray();
+	};
 
 	/**
 	 * Represents a graph edge (e.g. connection of 2 nodes in a graph)
@@ -253,8 +249,8 @@
 	 *                                                  If false, the edge has no direction
 	 */
 	function Edge(a, b, options) {
-		if (!(a instanceof sg.Node) || !(b instanceof sg.Node)) {
-			throw "Params are not nodes.";
+		if (!(a instanceof Node) || !(b instanceof Node)) {
+			throw "Params are not of type sg.Node.";
 		}
 
 		if (options && typeof options !== "object") {
@@ -262,13 +258,56 @@
 		}
 
 		if (options && options.directed && typeof options.directed !== "boolean") {
-			throw "options.directed must be a boolean";
+			throw "options.directed must be a boolean.";
 		}
 
-		var _guid     = util.guid();
-		this.getGUID  = function() {
-			return _guid;
-		};
+
+		/**
+		 * Custom object for storing arbitrary data
+		 * @property options
+		 * @type Object
+		 * @default {}
+		 */
+		this.options = options || {};
+		
+		/**
+		 * If true, the edge is directed source->target. If false, the edge has no direction
+		 * @private
+		 * @property _directed
+		 * @type Boolean
+		 * @default false
+		 */
+		this._directed = options && options.directed ? options.directed : false;
+
+		/**
+		 * The first end of the edge
+		 * @private
+		 * @property sourceNode
+		 * @type sg.Node
+		 */
+		this._sourceNode = a;
+		
+		/**
+		 * The second end of the edge
+		 * @private
+		 * @property targetNode
+		 * @type sg.Node
+		 */
+		this._targetNode = b;
+		
+		/**
+		 * @private
+		 * @property _sourceConnection
+		 * @type _EdgeConnection
+		 */
+		this._sourceConnection = new _EdgeConnection(this, this._targetNode, this.options);
+
+		/**
+		 * @private
+		 * @property _targetConnection
+		 * @type _EdgeConnection
+		 */
+		this._targetConnection = new _EdgeConnection(this, this._sourceNode, this.options);
 
 		/**
 		 * The graph of which the edge is a member or undefined
@@ -278,75 +317,52 @@
 		 * @default undefined
 		 */
 		this._graph   = undefined;
-
-		/**
-		 * Custom object for storing arbitrary data
-		 * @property options
-		 * @type Object
-		 * @default {}
-		 */
-		this.options = options || {};
-
-		/**
-		 * The first end of the edge
-		 * @private
-		 * @attribute source
-		 * @type sg.Node
-		 */
-		var source = a;
-		
-		/**
-		 * The second end of the edge
-		 * @private
-		 * @attribute target
-		 * @type sg.Node
-		 */
-		var target = b;
-
-		/**
-		 * If true, the edge is directed source->target. If false, the edge has no direction
-		 * @private
-		 * @property directed
-		 * @type Boolean
-		 * @default false
-		 */
-		this.directed = options && options.directed ? options.directed : false;
-		
-		/**
-		 * @private
-		 * @property source
-		 * @type sg.Edge.prototype.EdgeConnection
-		 */
-		this.source = new Edge.prototype.EdgeConnection(this, target, this.options);
-
-		/**
-		 * @private
-		 * @property target
-		 * @type sg.Edge.prototype.EdgeConnection
-		 */
-		this.target = this.directed ? undefined : 
-					  new Edge.prototype.EdgeConnection(this, source, this.options);
-
-		/**
-		 * Getter for the source node
-		 * @method getSource
-		 * @return {sg.Node} the source node of the edge
-		 */
-		this.getSource = function() {
-			return source;
-		};
-
-		/**
-		 * Getter for the target node
-		 * @method getTarget
-		 * @return {sg.Node} the target node of the edge
-		 */
-		this.getTarget = function() {
-			return target;
-		};
 	}
 
-	Edge.prototype.EdgeConnection = function(edge, node, options) {
+	/**
+	 * Getter for the source node
+	 * @method getSource
+	 * @return {sg.Node} the source node of the edge
+	 */
+	Edge.prototype.getSource = function() {
+		return this._source;
+	};
+
+	/**
+	 * Getter for the target node
+	 * @method getTarget
+	 * @return {sg.Node} the target node of the edge
+	 */
+	Edge.prototype.getTarget = function() {
+		return this._target;
+	};
+
+	Edge.prototype.directed = function(d) {
+		if (d !== undefined) {
+			if (typeof d !== "boolean") {
+				throw "directed should be boolean.";
+			}
+
+			if (this._graph._direction !== DIRECTION.MIXED) {
+				throw "the graph direction should be mixed.";
+			}
+
+			this._directed = d;
+			return this;
+		}
+
+		return this._directed;
+	};
+
+	/**
+	 * Represents a one-way edge. Private class. Do not instanciate directly.
+	 * @class _EdgeConnection
+	 * @constructor
+	 * @param {sg.Edge} edge
+	 * @param {sg.Node} node
+	 * @param {Object} [options]
+	 */
+	function _EdgeConnection(edge, node, options) {
 		if (!(edge instanceof Edge)) {
 			throw "The edge param should be sg.Edge.";
 		}
@@ -359,10 +375,27 @@
 			throw "The options param should be object.";
 		}
 
+		/**
+		 * @property edge
+		 * @type {sg.Edge}
+		 * @readOnly
+		 */
 		this.edge = edge;
+		
+		/**
+		 * @property node
+		 * @type {sg.Node}
+		 * @readOnly
+		 */
 		this.node = node;
+
+		/**
+		 * @property options
+		 * @type {Object|undefined}
+		 * @default undefined
+		 */
 		this.options = options;
-	};
+	}
 
 	/**
 	 * Represents a graph
@@ -373,16 +406,14 @@
 	 *      @param {sg.DIRECTION} [options.direction] the direction of the graph
 	 *      @param {Boolean} [options.override=false]
 	 *      @param {Boolean} [options.multigraph=false]
+	 *      @param {Boolean} [options.selfloops=false]
 	 */
 	function Graph(options) {
 		if (options && typeof options !== "object") {
 			throw "The options param should be object.";
 		}
 
-		if (options && options.direction &&
-			options.direction !== sg.DIRECTION.UNDIRECTED &&
-			options.direction !== sg.DIRECTION.DIRECTED &&
-			options.direction !== sg.DIRECTION.MIXED) {
+		if (options && options.direction && !DIRECTION.isDirection(options.direction)) {
 			throw "Unknown direction.";
 		}
 
@@ -394,13 +425,26 @@
 			throw "multigraph should be boolean.";
 		}
 
+		if (options && options.selfloops && typeof options.selfloops !== "boolean") {
+			throw "selfloops should be boolean";
+		}
+
 		/**
 		 * The direction of the graph
-		 * @property direction
+		 * @private
+		 * @property _direction
 		 * @type sg.DIRECTION
 		 * @default sg.DIRECTION.UNDIRECTED
 		 */
-		this.direction = options && options.direction ? options.direction : sg.DIRECTION.UNDIRECTED;
+		this._direction = options && options.direction ? options.direction : DIRECTION.UNDIRECTED;
+
+		/**
+		 * @private
+		 * @property _mutigraph
+		 * @type Boolean
+		 * @default false
+		 */
+		this._mutigraph  = options && options.mutigraph  ? options.mutigraph  : false;
 
 		/**
 		 * @property override
@@ -410,11 +454,11 @@
 		this.override  = options && options.override  ? options.override  : false;
 
 		/**
-		 * @property mutigraph
+		 * @property selfloops
 		 * @type Boolean
 		 * @default false
 		 */
-		this.mutigraph  = options && options.mutigraph  ? options.mutigraph  : false;
+		this.selfloops = options && options.selfloops  ? options.selfloops  : false;
 		
 		/**
 		 * Custom object for storing arbitrary data
@@ -429,6 +473,7 @@
 		 * @private
 		 * @property nodes
 		 * @type buckets.Dictionary
+		 * @readOnly
 		 */
 		this.nodes = new buckets.Dictionary();
 
@@ -437,149 +482,264 @@
 		 * @private
 		 * @property edges
 		 * @type buckets.Set
+		 * @readOnly
 		 */
-		if (this.multigraph) {
-			this.edges = new buckets.Bag(function(edge) {
-				return edge.getGUID();
-			});
-		} else {
-			this.edges = new buckets.Set(function(edge) {
-				return edge.getGUID();
-			});
+		this.edges = new buckets.Bag(function(edge) {
+			// just for faster checking for edge existance
+			if (typeof edge === "string") {
+				return edge;
+			}
+
+			return edge._sourceNode._id + "->" + edge._targetNode._id;
+		});
+	}
+
+	Graph.prototype._removeEdge = function(edge) {
+		if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
+			throw "edge sgould be sg.Edge or _EdgeConnection.";
 		}
 
-		/**
-		 * @method addNode
-		 * @param node {String|sg.Node}
-		 */
-		this.addNode = function(node) {
-			if ((typeof node !== "string" || node === "") && !(node instanceof sg.Node)) {
-				throw "Invalid node: " + node;
+		this.edges.forEach(function(e) {
+			if (e === edge) {
+				// TODO
 			}
+		});
+	};
 
-			var id = node.getId ? node.getId() : node;
-			if ( !this.override && this.nodes.get(id) !== undefined ) {
-				throw "A node with id \"" + id + "\" already exists in this graph." +
-					  "(Use the option override if needed)";
-			}
+	/**
+	 * @method addNode
+	 * @param {String|sg.Node} node
+	 */
+	Graph.prototype.addNode = function(node) {
+		if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
+			throw "Invalid node: " + node;
+		}
 
-			if ( node instanceof sg.Node && node._graph !== undefined ) {
-				throw "The node \"" + node.getId() + "\" is in another graph.";
-			}
+		var id = node._id || node;
+		if ( !this.override && this.nodes.get(id) !== undefined ) {
+			throw "A node with id \"" + id + "\" already exists in this graph." +
+				  "(Use the option override if needed)";
+		}
 
-			node = node instanceof sg.Node ? node : new sg.Node(id);
+		if ( node instanceof Node && node._graph !== undefined ) {
+			throw "The node \"" + id + "\" is in another graph.";
+		}
 
-			this.nodes.set(id, node);
-			node._graph = this;
-		};
+		node = node instanceof Node ? node : new Node(id);
 
-		/**
-		 * @method removeNode
-		 * @param node {sg.Node}
-		 */
-		this.removeNode = function(node) {
-			if ((typeof node !== "string" || node === "") && !(node instanceof sg.Node)) {
-				throw "Invalid node.";
-			}
+		this.nodes.set(id, node);
+		node._graph = this;
+	};
 
-			var id = node.getId ? node.getId() : node;
-			if (this.nodes.get(id) === undefined ||
-				(node instanceof sg.Node && this.nodes.get(id) !== node)) {
-				throw "The passed node is not in this graph.";
-			}
+	/**
+	 * @method removeNode
+	 * @param {String|sg.Node} node
+	 */
+	Graph.prototype.removeNode = function(node) {
+		if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
+			throw "Invalid node: " + node;
+		}
 
-			node = this.nodes.get(id);
-			this.edges.forEach(function(edge) {
-				var source = edge.getSource();
-				var target = edge.getTarget();
+		var id = node._id || node;
+		if (this.nodes.get(id) === undefined ||
+			(node instanceof Node && this.nodes.get(id) !== node)) {
+			throw "The passed node is not in this graph.";
+		}
 
-				if (source === node || target === node) {
-					if (source !== node) {
-						source.removeEdge(edge);
-					}
+		node = this.nodes.get(id);
+		this.edges.forEach(function(edge) {
+			var source = edge._sourceNode;
+			var target = edge._targetNode;
 
-					if (target !== node) {
-						target.removeEdge(edge);
-					}
-
-					this.edges.remove(edge);
+			if (source === node || target === node) {
+				if (source !== node) {
+					source._removeEdge(edge);
 				}
-			}.bind(this));
 
-			node._graph   = undefined;
-			node.removeAllEdges();
-			this.nodes.remove(id);
-		};
-
-		/**
-		 * @method connect
-		 * @param keyA {sg.Node|String}
-		 * @param keyB {sg.Node|String}
-		 * @param [options] {Object}
-		 */
-		this.connect = function(a, b, options) {
-			var aId = a.getId ? a.getId() : a;
-			var bId = b.getId ? b.getId() : b;
-			if (this.nodes.get(aId) === undefined) {
-				throw "Node \"" + aId + "\" isn't in the graph.";
-			}
-
-			if (this.nodes.get(bId) === undefined) {
-				throw "Node \"" + bId + "\" isn't in the graph.";
-			}
-
-			if (options && typeof options !== "object") {
-				throw "Options must be an object.";
-			}
-
-			var source = this.nodes.get(aId);
-			var target = this.nodes.get(bId);
-
-			var edge = new sg.Edge(source, target, options);
-			edge._graph = this;
-			source.addEdge(edge.source);
-			edge.target && target.addEdge(edge.target);
-			this.edges.add(edge);
-		};
-
-		/**
-		 * @method detach
-		 * @param keyA {sg.Node|String}
-		 * @param keyB {sg.Node|String}
-		 */
-		this.detach = function(a, b) {
-			var aId = a.getId ? a.getId() : a;
-			var bId = b.getId ? b.getId() : b;
-			if (this.nodes.get(aId) === undefined) {
-				throw "Node \"" + aId + "\" isn't in the graph.";
-			}
-
-			if (this.nodes.get(bId) === undefined) {
-				throw "Node \"" + bId + "\" isn't in the graph.";
-			}
-
-			var nodeA = this.nodes.get(aId);
-			var nodeB = this.nodes.get(bId);
-
-			var first, second;
-			this.edges.forEach(function(edge) {
-				first  = edge.getSource();
-				second = edge.getTarget();
-
-				if ((first === nodeA && second === nodeB) ||
-					(first === nodeB && second === nodeA)) {
-					first.removeEdge (edge);
-					second.removeEdge(edge);
-					this.edges.remove(edge);
-					edge._graph = undefined;
+				if (target !== node) {
+					target._removeEdge(edge);
 				}
-			}.bind(this));
-		};
 
-		this.getNode = function(id) {
-			return this.nodes.get(id);
-		};
-	}
+				this.edges.remove(edge);
+			}
+		}.bind(this));
+
+		node._graph   = undefined;
+		node._removeAllEdges();
+		this.nodes.remove(id);
+	};
+
+	/**
+	 * @method connect
+	 * @param {sg.Node|String} a
+	 * @param {sg.Node|String} b
+	 * @param {Object} [options]
+	 */
+	Graph.prototype.connect = function(a, b, options) {
+		var aId = a._id || a;
+		var bId = b._id || b;
+		if (this.nodes.get(aId) === undefined) {
+			throw "Node \"" + aId + "\" isn't in the graph.";
+		}
+
+		if (this.nodes.get(bId) === undefined) {
+			throw "Node \"" + bId + "\" isn't in the graph.";
+		}
+
+		//TODO directed/mixed graphs will have problem here
+		if (!this._mutigraph && this.edges.contains(aId + "->" + bId)) {
+			throw "Edge between " + aId + " and " + bId + " already exists.";
+		}
+
+		if (!this.selfloops && aId === bId) {
+			throw "Slefloops are not allowed.";
+		}
+
+		if (options && typeof options !== "object") {
+			throw "Options must be an object.";
+		}
+
+		var source = this.nodes.get(aId);
+		var target = this.nodes.get(bId);
+
+		options = options || {};
+		if (this._direction === DIRECTION.UNDIRECTED) {
+			options.directed = false;
+		} else if (this._direction === DIRECTION.DIRECTED) {
+			options.directed = true;
+		}
+
+
+		var edge = new Edge(source, target, options);
+		edge._graph = this;
+		source._addEdge(edge._sourceConnection);
+		!options.directed && target._addEdge(edge._targetConnection);
+		this.edges.add(edge);
+	};
+
+	/**
+	 * @method detach
+	 * @param {sg.Node|String} a
+	 * @param {sg.Node|String} b
+	 */
+	Graph.prototype.detach = function(a, b) {
+		var aId = a._id || a;
+		var bId = b._id || b;
+		if (this.nodes.get(aId) === undefined) {
+			throw "Node \"" + aId + "\" isn't in the graph.";
+		}
+
+		if (this.nodes.get(bId) === undefined) {
+			throw "Node \"" + bId + "\" isn't in the graph.";
+		}
+
+		var nodeA = this.nodes.get(aId);
+		var nodeB = this.nodes.get(bId);
+
+		var first, second;
+		this.edges.forEach(function(edge) {
+			first  = edge._sourceNode;
+			second = edge._targetNode;
+
+			if ((first === nodeA && second === nodeB) ||
+				(first === nodeB && second === nodeA)) {
+				first._removeEdge (edge);
+				second._removeEdge(edge);
+				this.edges.remove(edge);
+				edge._graph = undefined;
+			}
+		}.bind(this));
+	};
+
+	Graph.prototype.getNode = function(id) {
+		return this.nodes.get(id);
+	};
+
+	Graph.prototype.direction = function(direction) {
+		if (direction !== undefined) {
+			if (!DIRECTION.isDirection(direction)) {
+				throw "Unknown direction.";
+			}
+
+			if (direction === this._direction) {
+				return this;
+			}
+
+			if (direction === DIRECTION.UNDIRECTED ||
+				direction === DIRECTION.DIRECTED) {
+				var directed = direction === DIRECTION.DIRECTED;
+				this.edges.forEach(function(edge) {
+					if (edge._directed !== directed) {
+						if (edge._directed === true) {
+							edge._targetNode._addEdge( edge._targetConnection );
+						} else {
+							edge._targetNode._removeEdge( edge._targetConnection );
+						}
+
+						edge._directed = directed;
+					}
+				});
+			}
+
+			this._direction = direction;
+			return this;
+		}
+		return this._direction;
+	};
+
+	Graph.prototype.multigraph = function(multigraph) {
+		if (multigraph !== undefined) {
+			if (typeof multigraph !== "boolean") {
+				throw "multigraph should be boolean.";
+			}
+
+			if (multigraph === this._mutigraph) {
+				return this;
+			}
+
+			if (this._mutigraph === true) {
+				this.edges = this.edges.toSet();
+			} else {
+				var bag = new buckets.Bag(function(edge) {
+					return edge.getGUID();
+				});
+				
+				this.edges.forEach(function(edge) {
+					bag.add(edge);
+				});
+
+				this.edges = bag;
+			}
+
+			this._mutigraph = multigraph;
+			return this;
+		}
+		return this._mutigraph;
+	};
+
+	Graph.prototype.override = function(override) {
+		if (override !== undefined) {
+			if (typeof override !== "boolean") {
+				throw "override should be boolean.";
+			}
+
+			this.override = override;
+			return this;
+		}
+		return this.override;
+	};
+
+	Graph.prototype.selfloops = function(selfloops) {
+		if (selfloops !== undefined) {
+			if (typeof selfloops !== "boolean") {
+				throw "selfloops should be boolean.";
+			}
+
+			this.selfloops = selfloops;
+			return this;
+		}
+		return this.selfloops;
+	};
 
 	function AbstractRenderer(graph) {
 		this.refresh = function() { throw "Unimplemented method."; };

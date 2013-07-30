@@ -85,8 +85,9 @@
 			var node2 = new sg.Node("Plovdiv");
 			var edge = new sg.Edge(node, node2);
 			
-			node.addEdge(edge);
-			expect(node.getEdges()[0].edge).toBe(edge);
+			node._addEdge(edge);
+			
+			expect(node.edges.toArray()[0].edge).toBe(edge);
 		});
 
 		it('removeEdge', function() {
@@ -97,35 +98,35 @@
 			var edge2 = new sg.Edge(node, node3);
 			var edge3 = new sg.Edge(node2, node3);
 
-			node.addEdge(edge);
-			node.addEdge(edge2);
-			node2.addEdge(edge);
-			node2.addEdge(edge3);
-			node3.addEdge(edge2);
-			node3.addEdge(edge3);
+			node._addEdge(edge);
+			node._addEdge(edge2);
+			node2._addEdge(edge);
+			node2._addEdge(edge3);
+			node3._addEdge(edge2);
+			node3._addEdge(edge3);
 
 			var nonEdge1 = function() {
-				node.removeEdge("Plovdiv");
+				node._removeEdge("Plovdiv");
 			};
 			var nonEdge2 = function() {
-				node.removeEdge(123);
+				node._removeEdge(123);
 			};
 			var nonEdge3 = function() {
-				node.removeEdge();
+				node._removeEdge();
 			};
 
 			expect(nonEdge1).toThrow();
 			expect(nonEdge2).toThrow();
 			expect(nonEdge3).toThrow();
 
-			node.removeEdge(edge);
-			node2.removeEdge(edge);
+			node._removeEdge(edge);
+			node2._removeEdge(edge);
 
-			expect(node.getEdges()[0].edge).toBe(edge2);
-			expect(node2.getEdges()[0].edge).toBe(edge3);
-			expect(node3.getEdges().length).toBe(2);
-			expect(node3.getEdges()[0].edge).toBe(edge2);
-			expect(node3.getEdges()[1].edge).toBe(edge3);
+			expect(node.edges.toArray()[0].edge).toBe(edge2);
+			expect(node2.edges.toArray()[0].edge).toBe(edge3);
+			expect(node3.edges.toArray().length).toBe(2);
+			expect(node3.edges.toArray()[0].edge).toBe(edge2);
+			expect(node3.edges.toArray()[1].edge).toBe(edge3);
 		});
 
 		it('removeAllEdges', function() {
@@ -135,40 +136,14 @@
 			var edge = new sg.Edge(node, node2);
 			var edge2 = new sg.Edge(node, node3);
 
-			node.addEdge(edge);
-			node.addEdge(edge2);
+			node._addEdge(edge);
+			node._addEdge(edge2);
 
-			expect(node.getEdges().length).toBe(2);
+			expect(node.edges.size()).toBe(2);
 
-			node.removeAllEdges();
+			node._removeAllEdges();
 
-			expect(node.getEdges().length).toBe(0);
-		});
-
-		it('getEdges', function() {
-			var node = new sg.Node("Sofia");
-			var node2 = new sg.Node("Plovdiv");
-			var node3 = new sg.Node("Burgas");
-			var node4 = new sg.Node("Varna");
-			var edge = new sg.Edge(node, node2);
-			var edge2 = new sg.Edge(node, node3);
-			var edge3 = new sg.Edge(node, node4);
-
-			node.addEdge(edge);
-			node.addEdge(edge2);
-			
-			var edges = node.getEdges();
-			expect(edges.length).toBe(2);
-			expect(edges[0].edge).toBe(edge);
-			expect(edges[1].edge).toBe(edge2);
-
-			node.addEdge(edge3);
-			edges = node.getEdges();
-
-			expect(edges.length).toBe(3);
-			expect(edges[0].edge).toBe(edge);
-			expect(edges[1].edge).toBe(edge2);
-			expect(edges[2].edge).toBe(edge3);
+			expect(node.edges.size()).toBe(0);
 		});
 
 		it('addToGraph', function() {
@@ -249,8 +224,8 @@
 
 			n.connect(n2);
 
-			expect(n.getEdges()[0].node).toBe(n2);
-			expect(n2.getEdges()[0].node).toBe(n);
+			expect(n.edges.toArray()[0].node).toBe(n2);
+			expect(n2.edges.toArray()[0].node).toBe(n);
 		});
 
 		it('detach', function() {
@@ -281,13 +256,13 @@
 			expect(incorrectNode2).toThrow();
 			expect(incorrectNode3).toThrow();
 
-			expect(n.getEdges()[0].node).toBe(n2);
-			expect(n2.getEdges()[0].node).toBe(n);
+			expect(n.edges.toArray()[0].node).toBe(n2);
+			expect(n2.edges.toArray()[0].node).toBe(n);
 
 			n.detach(n2);
 
-			expect(n.getEdges().length).toBe(0);
-			expect(n2.getEdges().length).toBe(0);
+			expect(n.edges.toArray().length).toBe(0);
+			expect(n2.edges.toArray().length).toBe(0);
 		});
 	});
 	
@@ -337,14 +312,14 @@
 			};
 			var nonBooleanMultigraph3 = function() {
 				return sg.Graph({
-					multigraph: "override"
+					multigraph: "multigraph"
 				});
 			};
 			var nonExceptionalExample = function() {
 				return sg.Graph({
 					direction: sg.DIRECTION.DIRECTED,
-					multigraph: true,
-					override: false
+					override: false,
+					multigraph: true
 				});
 			};
 
@@ -365,13 +340,13 @@
 
 			var g = new sg.Graph({
 				direction: sg.DIRECTION.MIXED,
-				weighted: false,
+				multigraph: false,
 				override: true,
 				custom: "prop"
 			});
 
-			expect(g.direction).toBe(sg.DIRECTION.MIXED);
-			expect(g.weighted).toBeFalsy();
+			expect(g.direction()).toBe(sg.DIRECTION.MIXED);
+			expect(g.multigraph()).toBeFalsy();
 			expect(g.override).toBeTruthy();
 			expect(g.options.custom).toBe("prop");
 		});
