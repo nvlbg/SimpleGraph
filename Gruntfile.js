@@ -45,9 +45,7 @@ module.exports = function(grunt) {
 				browser: true,
 				node: true,
 				smarttabs: true,
-				expr: true,
 				strict: true,
-				validthis: true,
 				globals: {
 					buckets: true
 				}
@@ -76,14 +74,14 @@ module.exports = function(grunt) {
 				src: "src/simple-graph.js",
 				options: {
 					specs: "spec/*Spec.js",
-					vendor: "lib/buckets-minified.js"
+					vendor: "lib/buckets.js"
 				}
 			},
 			afterUglify: {
 				src: "build/sg.<%= pkg.version %>.min.js",
 				options: {
 					specs: "spec/*Spec.js",
-					vendor: "lib/buckets-minified.js"
+					vendor: "lib/buckets.js"
 				}
 			}
 		}

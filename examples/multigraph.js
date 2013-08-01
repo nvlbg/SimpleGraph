@@ -1,6 +1,6 @@
 if (typeof require !== "undefined") {
 	var sg = require("../src/simple-graph.js");
-	var buckets = require("../lib/buckets-minified.js");
+	var buckets = require("../lib/buckets.js");
 }
 
 var dfs = function(g, start, goal) {

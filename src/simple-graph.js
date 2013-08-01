@@ -2,15 +2,60 @@
 	"use strict";
 	var buckets;
 	if (typeof require !== "undefined") {
-		buckets = require("../lib/buckets-minified.js");
+		buckets = require("../lib/buckets.js");
 	} else if (typeof window !== "undefined") {
 		buckets = window.buckets;
 	}
+
+	var util = {
+		isObject: function(test) {
+			return Object.prototype.toString.call(test) === "[object Object]";
+		},
+
+		multiBagContains: function(bag, key) {
+			return typeof bag.dictionary.table[key] !== "undefined";
+		},
+
+		multiBagRemove: function(bag, key) {
+			var element = bag.dictionary.table[key];
+			if (!buckets.isUndefined(element)) {
+				bag.nElements -= element.value.size();
+				delete bag.dictionary.table[key];
+				bag.dictionary.nElements--;
+				return true;
+			}
+			return false;
+		},
+
+		multiBagContainsUndirectedEdge: function(bag, key) {
+			var element = bag.dictionary.table[key];
+			var ret = false;
+			if (!buckets.isUndefined(element)) {
+				element.value.forEach(function(edge) {
+					if (edge._directed === false) {
+						ret = true;
+						return false;
+					}
+				});
+			}
+			return ret;
+		},
+
+		s4: function() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+					   .toString(16)
+					   .substring(1);
+		},
+
+		guid: function() {
+			return util.s4() + util.s4() + '-' + util.s4() + '-' + util.s4() + '-' +
+				   util.s4() + '-' + util.s4() + util.s4() + util.s4();
+		}
+	};
 	
 	/**
 	 * Enumeration for the direction property of a graph
-	 * @namespace sg
-	 * @class DIRECTION
+	 * @class sg.DIRECTION
 	 * @static
 	 * @final
 	 */
@@ -56,23 +101,22 @@
 
 	/**
 	 * Represents a graph node
-	 * @namespace sg
-	 * @class Node
+	 * @class sg.Node
 	 * @constructor
 	 * @param {String} id Node's identificator.
 	 *                    Two nodes in a graph cannot have the same id.
 	 *                    ***Must not be empty string***
 	 * @param {Object} [options] Optional data object the user can store in the node.
 	 * @example
-	 *  var a = new Node("Example");
-	 *  var b = new Node("Data", { index: 10 });
+	 *     var a = new Node("Example");
+	 *     var b = new Node("Data", { index: 10 });
 	 */
 	function Node(id, options) {
 		if (typeof id !== "string" || id === "") {
 			throw "Invalid value for id.";
 		}
 
-		if (options && typeof options !== "object") {
+		if (options && !util.isObject(options)) {
 			throw "The options param should be object.";
 		}
 
@@ -98,8 +142,10 @@
 		 * @type buckets.Set of _EdgeConnection
 		 * @readOnly
 		 */
-		this.edges = new buckets.Bag(function(edgeConnection) {
-			return edgeConnection.node._id;
+		this.edges = new buckets.MultiBag(function(e) {
+			return e.node._id;
+		}, function(e) {
+			return e.edge._guid;
 		});
 
 		/**
@@ -155,14 +201,6 @@
 		if (edge instanceof _EdgeConnection) {
 			this.edges.remove(edge);
 		}
-	};
-
-	/**
-	 * @private
-	 * @method _removeAllEdges
-	 */
-	Node.prototype._removeAllEdges = function() {
-		this.edges.clear();
 	};
 
 	/**
@@ -235,9 +273,8 @@
 	};
 
 	/**
-	 * Represents a graph edge (e.g. connection of 2 nodes in a graph)
-	 * @namespace sg
-	 * @class Edge
+	 * Represents a graph edge (e.g. connection of 2 nodes in a graph). ***Do not instanciate directly.***
+	 * @class sg.Edge
 	 * @constructor
 	 * @param {sg.Node} source Source node
 	 * @param {sg.Node} target Target node
@@ -253,14 +290,13 @@
 			throw "Params are not of type sg.Node.";
 		}
 
-		if (options && typeof options !== "object") {
+		if (options && !util.isObject(options)) {
 			throw "The options param should be object.";
 		}
 
 		if (options && options.directed && typeof options.directed !== "boolean") {
 			throw "options.directed must be a boolean.";
 		}
-
 
 		/**
 		 * Custom object for storing arbitrary data
@@ -269,6 +305,19 @@
 		 * @default {}
 		 */
 		this.options = options || {};
+
+		/**
+		 * Edge's global unique identifier
+		 * @private
+		 * @property _guid
+		 */
+		this._guid   = util.guid();
+
+		/**
+		 * @private
+		 * @property _key
+		 */
+		this._key    = a._id + b._id;
 		
 		/**
 		 * If true, the edge is directed source->target. If false, the edge has no direction
@@ -325,7 +374,7 @@
 	 * @return {sg.Node} the source node of the edge
 	 */
 	Edge.prototype.getSource = function() {
-		return this._source;
+		return this._sourceNode;
 	};
 
 	/**
@@ -334,7 +383,15 @@
 	 * @return {sg.Node} the target node of the edge
 	 */
 	Edge.prototype.getTarget = function() {
-		return this._target;
+		return this._targetNode;
+	};
+
+	Edge.prototype.removeFromGraph = function() {
+		if (this._graph === undefined) {
+			throw "The edge is not in a graph.";
+		}
+
+		this._graph._removeEdge(this);
 	};
 
 	Edge.prototype.directed = function(d) {
@@ -363,6 +420,7 @@
 	 * @param {Object} [options]
 	 */
 	function _EdgeConnection(edge, node, options) {
+		/*jshint validthis:true */
 		if (!(edge instanceof Edge)) {
 			throw "The edge param should be sg.Edge.";
 		}
@@ -371,7 +429,7 @@
 			throw "The node param should be sg.Node.";
 		}
 
-		if (options && typeof options !== "object") {
+		if (options && !util.isObject(options)) {
 			throw "The options param should be object.";
 		}
 
@@ -399,8 +457,7 @@
 
 	/**
 	 * Represents a graph
-	 * @namespace sg
-	 * @class Graph
+	 * @class sg.Graph
 	 * @constructor
 	 * @param {Object} [options] Optional data object the user can store in the graph.
 	 *      @param {sg.DIRECTION} [options.direction] the direction of the graph
@@ -409,7 +466,7 @@
 	 *      @param {Boolean} [options.selfloops=false]
 	 */
 	function Graph(options) {
-		if (options && typeof options !== "object") {
+		if (options && !util.isObject(options)) {
 			throw "The options param should be object.";
 		}
 
@@ -440,11 +497,11 @@
 
 		/**
 		 * @private
-		 * @property _mutigraph
+		 * @property _multigraph
 		 * @type Boolean
 		 * @default false
 		 */
-		this._mutigraph  = options && options.mutigraph  ? options.mutigraph  : false;
+		this._multigraph  = options && options.multigraph  ? options.multigraph  : false;
 
 		/**
 		 * @property override
@@ -484,26 +541,24 @@
 		 * @type buckets.Set
 		 * @readOnly
 		 */
-		this.edges = new buckets.Bag(function(edge) {
-			// just for faster checking for edge existance
-			if (typeof edge === "string") {
-				return edge;
-			}
-
-			return edge._sourceNode._id + "->" + edge._targetNode._id;
+		this.edges = new buckets.MultiBag(function(e) {
+			return e._key;
+		}, function(e) {
+			return e._guid;
 		});
 	}
 
 	Graph.prototype._removeEdge = function(edge) {
+		/*jshint expr:true */
 		if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
 			throw "edge sgould be sg.Edge or _EdgeConnection.";
 		}
 
-		this.edges.forEach(function(e) {
-			if (e === edge) {
-				// TODO
-			}
-		});
+		edge = edge instanceof Edge ? edge : edge.edge;
+
+		edge._sourceNode._removeEdge(edge);
+		!edge._directed && edge._targetNode._removeEdge(edge);
+		this.edges.remove(edge);
 	};
 
 	/**
@@ -565,7 +620,7 @@
 		}.bind(this));
 
 		node._graph   = undefined;
-		node._removeAllEdges();
+		node.edges.clear();
 		this.nodes.remove(id);
 	};
 
@@ -576,6 +631,7 @@
 	 * @param {Object} [options]
 	 */
 	Graph.prototype.connect = function(a, b, options) {
+		/*jshint expr:true */
 		var aId = a._id || a;
 		var bId = b._id || b;
 		if (this.nodes.get(aId) === undefined) {
@@ -586,8 +642,10 @@
 			throw "Node \"" + bId + "\" isn't in the graph.";
 		}
 
-		//TODO directed/mixed graphs will have problem here
-		if (!this._mutigraph && this.edges.contains(aId + "->" + bId)) {
+		if (!this._multigraph && 
+			(util.multiBagContains(this.edges, aId + bId) ||
+			 util.multiBagContainsUndirectedEdge(this.edges, bId + aId))
+			) {
 			throw "Edge between " + aId + " and " + bId + " already exists.";
 		}
 
@@ -595,7 +653,7 @@
 			throw "Slefloops are not allowed.";
 		}
 
-		if (options && typeof options !== "object") {
+		if (options && !util.isObject(options)) {
 			throw "Options must be an object.";
 		}
 
@@ -609,11 +667,10 @@
 			options.directed = true;
 		}
 
-
 		var edge = new Edge(source, target, options);
 		edge._graph = this;
 		source._addEdge(edge._sourceConnection);
-		!options.directed && target._addEdge(edge._targetConnection);
+		!options.directed && source !== target && target._addEdge(edge._targetConnection);
 		this.edges.add(edge);
 	};
 
@@ -633,22 +690,11 @@
 			throw "Node \"" + bId + "\" isn't in the graph.";
 		}
 
-		var nodeA = this.nodes.get(aId);
-		var nodeB = this.nodes.get(bId);
-
-		var first, second;
-		this.edges.forEach(function(edge) {
-			first  = edge._sourceNode;
-			second = edge._targetNode;
-
-			if ((first === nodeA && second === nodeB) ||
-				(first === nodeB && second === nodeA)) {
-				first._removeEdge (edge);
-				second._removeEdge(edge);
-				this.edges.remove(edge);
-				edge._graph = undefined;
-			}
-		}.bind(this));
+		if (util.multiBagRemove(this.edges, aId + bId) ||
+			util.multiBagRemove(this.edges, bId + aId)) {
+			util.multiBagRemove(this.nodes.get(aId).edges, bId);
+			util.multiBagRemove(this.nodes.get(bId).edges, aId);
+		}
 	};
 
 	Graph.prototype.getNode = function(id) {
@@ -693,28 +739,18 @@
 				throw "multigraph should be boolean.";
 			}
 
-			if (multigraph === this._mutigraph) {
+			if (multigraph === this._multigraph) {
 				return this;
 			}
 
-			if (this._mutigraph === true) {
-				this.edges = this.edges.toSet();
-			} else {
-				var bag = new buckets.Bag(function(edge) {
-					return edge.getGUID();
-				});
-				
-				this.edges.forEach(function(edge) {
-					bag.add(edge);
-				});
-
-				this.edges = bag;
+			if (this._multigraph === true) {
+				this.edges.normalize();
 			}
-
-			this._mutigraph = multigraph;
+			
+			this._multigraph = multigraph;
 			return this;
 		}
-		return this._mutigraph;
+		return this._multigraph;
 	};
 
 	Graph.prototype.override = function(override) {

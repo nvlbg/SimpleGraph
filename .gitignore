@@ -1,5 +1,5 @@
 # custom built documentation
-src/out/*
+docs/*
 
 node_modules/*
 
@@ -7,3 +7,6 @@ build/*
 
 # grunt generated files
 .grunt/*
+
+# phantomjs/jasmine generated file (could appear for some reason)
+_SpecRunner.html
