@@ -13,7 +13,8 @@
 		},
 
 		multiBagContains: function(bag, key) {
-			return typeof bag.dictionary.table[key] !== "undefined";
+			return typeof bag.dictionary.table[key] !== "undefined" &&
+				   !bag.dictionary.table[key].value.isEmpty();
 		},
 
 		multiBagRemove: function(bag, key) {
