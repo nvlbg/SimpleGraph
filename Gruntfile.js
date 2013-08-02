@@ -60,14 +60,16 @@ module.exports = function(grunt) {
                 src: "src/simple-graph.js",
                 options: {
                     specs: "spec/*Spec.js",
-                    vendor: "lib/buckets.js"
+                    vendor: "lib/buckets.js",
+                    helpers: "spec/helper.js"
                 }
             },
             afterUglify: {
                 src: "build/sg.<%= pkg.version %>.min.js",
                 options: {
                     specs: "spec/*Spec.js",
-                    vendor: "lib/buckets.js"
+                    vendor: "lib/buckets.js",
+                    helpers: "spec/helper.js"
                 }
             }
         }

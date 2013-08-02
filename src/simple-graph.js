@@ -159,7 +159,7 @@
          * **See also**: {{#crossLink "sg.Node/getEdges"}}sg.Node.getEdges{{/crossLink}}
          * 
          * @property edges
-         * @type buckets.MultiBag of _EdgeConnection
+         * @type buckets.MultiBag of EdgeConnection
          * @example
          *     var edges = node.edges.size()
          *     node.edges.forEach(function(edge) {
@@ -186,15 +186,15 @@
     }
 
     /**
-     * Adds the appropriate _EdgeConnection to Node.edges
+     * Adds the appropriate EdgeConnection to Node.edges
      * 
      * @private
      * @method _addEdge
-     * @param {sg.Edge|_EdgeConnection} edge
+     * @param {Edge|EdgeConnection} edge
      */
     Node.prototype._addEdge = function(edge) {
-        if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
-            throw "edge should be sg.Edge or _EdgeConnection.";
+        if (!(edge instanceof Edge) && !(edge instanceof EdgeConnection)) {
+            throw "edge should be Edge or EdgeConnection.";
         }
 
         if (edge instanceof Edge) {
@@ -207,21 +207,21 @@
             }
         }
 
-        if (edge instanceof _EdgeConnection) {
+        if (edge instanceof EdgeConnection) {
             this.edges.add(edge);
         }
     };
 
     /**
-     * Removes the appropriate _EdgeConnection from Node.edges
+     * Removes the appropriate EdgeConnection from Node.edges
      * 
      * @private
      * @method _removeEdge
-     * @param {sg.Edge|_EdgeConnection} edge
+     * @param {Edge|EdgeConnection} edge
      */
     Node.prototype._removeEdge = function(edge) {
-        if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
-            throw "edge should be sg.Edge or _EdgeConnection.";
+        if (!(edge instanceof Edge) && !(edge instanceof EdgeConnection)) {
+            throw "edge should be Edge or EdgeConnection.";
         }
 
         if (edge instanceof Edge) {
@@ -230,7 +230,7 @@
             this.edges.remove(edge._targetConnection);
         }
 
-        if (edge instanceof _EdgeConnection) {
+        if (edge instanceof EdgeConnection) {
             this.edges.remove(edge);
         }
     };
@@ -324,17 +324,17 @@
      * Adding/removing elements from the array won't affect the graph.
      * 
      * @method getEdges
-     * @return {Array of _EdgeConnection}
+     * @return {Array of EdgeConnection}
      */
     Node.prototype.getEdges = function() {
         return this.edges.toArray();
     };
 
     /**
-     * Represents an edge (e.g. connection between 2 nodes). 
-     * ***Do not instanciate directly!***
+     * Private class. Represents an edge (e.g. connection between 2 nodes). 
+     * ***It shouldn't be instanciated***
      * 
-     * @class sg.Edge
+     * @class Edge
      * @constructor
      * @param {sg.Node} source Source node
      * @param {sg.Node} target Target node
@@ -411,22 +411,22 @@
         this._targetNode = b;
         
         /**
-         * The _EdgeConnection that the source node need to have
+         * The EdgeConnection that the source node need to have
          * 
          * @private
          * @property _sourceConnection
-         * @type _EdgeConnection
+         * @type EdgeConnection
          */
-        this._sourceConnection = new _EdgeConnection(this, this._targetNode, this.options);
+        this._sourceConnection = new EdgeConnection(this, this._targetNode, this.options);
 
         /**
-         * The _EdgeConnection that the target node needs to have
+         * The EdgeConnection that the target node needs to have
          * 
          * @private
          * @property _targetConnection
-         * @type _EdgeConnection
+         * @type EdgeConnection
          */
-        this._targetConnection = new _EdgeConnection(this, this._sourceNode, this.options);
+        this._targetConnection = new EdgeConnection(this, this._sourceNode, this.options);
 
         /**
          * The graph of which the edge is a member or undefined
@@ -463,7 +463,7 @@
      * Removes the edge from the graph containing him
      * 
      * @method removeFromGraph
-     * @return {sg.Edge} reference to *this* edge for method chaining
+     * @return {Edge} reference to *this* edge for method chaining
      * @chainable
      */
     Edge.prototype.removeFromGraph = function() {
@@ -480,7 +480,7 @@
      * 
      * @method directed
      * @param {Boolean} [direction] the new direction of the edge
-     * @return {Boolean|sg.Edge}
+     * @return {Boolean|Edge}
      *     If used as getter, returns whether or not the edge is directed
      *     If used as setter, reference to *this* edge for method chaining
      */
@@ -504,19 +504,19 @@
     /**
      * Private class. Represents a one-way edge,
      * so each node can store only what it needs.
-     * Each edge has 2 _EdgeConnections - one for each node.
+     * Each edge has 2 EdgeConnections - one for each node.
      * ***It shouldn't be instanciated***
      * 
-     * @class _EdgeConnection
+     * @class EdgeConnection
      * @constructor
-     * @param {sg.Edge} edge
+     * @param {Edge} edge
      * @param {sg.Node} node
      * @param {Object} [options]
      */
-    function _EdgeConnection(edge, node, options) {
+    function EdgeConnection(edge, node, options) {
         /*jshint validthis:true */
         if (!(edge instanceof Edge)) {
-            throw "The edge param should be sg.Edge.";
+            throw "The edge param should be Edge.";
         }
 
         if (!(node instanceof Node)) {
@@ -531,7 +531,7 @@
          * Reference to the edge
          * 
          * @property edge
-         * @type {sg.Edge}
+         * @type {Edge}
          */
         this.edge = edge;
         
@@ -653,11 +653,11 @@
 
     Graph.prototype._removeEdge = function(edge) {
         /*jshint expr:true */
-        if (!(edge instanceof Edge) && !(edge instanceof _EdgeConnection)) {
-            throw "edge sgould be sg.Edge or _EdgeConnection.";
+        if (!(edge instanceof Edge) && !(edge instanceof EdgeConnection)) {
+            throw "edge sgould be Edge or EdgeConnection.";
         }
 
-        if (edge instanceof _EdgeConnection) {
+        if (edge instanceof EdgeConnection) {
             edge = edge.edge;
         }
 
@@ -918,7 +918,6 @@
     var sg = {
         DIRECTION: DIRECTION,
         Node: Node,
-        Edge: Edge,
         Graph: Graph,
 
         Renderer: {
@@ -926,6 +925,11 @@
             ConsoleRenderer : ConsoleRenderer
         }
     };
+
+    if (typeof JASMINE_TEST !== "undefined") {
+        sg.Edge = Edge;
+        sg.EdgeConnection = EdgeConnection;
+    }
     
     if (typeof module !== "undefined") { module.exports = sg; }
     else if (typeof window !== "undefined") { window.sg = window.sg || sg; }

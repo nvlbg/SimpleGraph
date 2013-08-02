@@ -1,7 +1,7 @@
 {
   "name": "simple-graph",
   "description": "A library for graph manipulation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/nvlbg/SimpleGraph",
   "author": {
     "name": "Nikolay Lazarov",
