@@ -33,7 +33,8 @@ var dfs = function(g, start, goal) {
 };
 
 var g = new sg.Graph({
-	multigraph: true
+	multigraph: true,
+	selfloops: true
 });
 
 g.addNode("1");
