@@ -39,15 +39,15 @@ To run ***only*** the unit tests:
 
 `$ grunt test`
 
-### Running JSLint
+### Running JSHint
 
 To ***only*** lint the code:
 
-`$ grunt lint`
+`$ grunt hint`
 
 or
 
-`$ grunt hint`
+`$ grunt lint`
 
 TODO
 ----
@@ -55,7 +55,7 @@ TODO
 Here are some things that you may contribute:
 
 - [ ] Add more unit tests
-- [x] <s>Add more documentation strings</s>
+- [x] <del>Add more documentation strings</del>
 - [ ] Add comments where code gets nasty
-- [x] <s>Graph visualization renderer</s> - (https://github.com/nvlbg/SimpleGraphViewer)
+- [x] <del>Graph visualization renderer</del> - [SimpleGraphViewer](https://github.com/nvlbg/SimpleGraphViewer)
 - [ ] Add some examples in the documentation
