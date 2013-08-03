@@ -154,7 +154,7 @@
         /**
          * The edges connected to this node. ***Use only for reading!***
          * The purpose of this property is for fast reading. If you change
-         * some elements you may brake something with the graph
+         * some elements you may brake something with the graph.
          * 
          * **See also**: {{#crossLink "sg.Node/getEdges"}}sg.Node.getEdges{{/crossLink}}
          * 
@@ -462,9 +462,9 @@
     /**
      * Removes the edge from the graph containing him
      * 
+     * @chainable
      * @method removeFromGraph
      * @return {Edge} reference to *this* edge for method chaining
-     * @chainable
      */
     Edge.prototype.removeFromGraph = function() {
         if (this._graph === undefined) {
@@ -563,10 +563,11 @@
      *      @param {sg.DIRECTION} [options.direction=sg.DIRECTION.UNDIRECTED]
      *                            the direction of the graph
      *      @param {Boolean} [options.override=false]
-     *                       when you add a node with the same id as another one in the
-     *                       graph
-     *      @param {Boolean} [options.multigraph=false]
-     *      @param {Boolean} [options.selfloops=false]
+     *                       If true, adding a node with the same id as another one in the graph
+     *                       will override the old one.
+     *                       If false, an exception will be thrown.
+     *      @param {Boolean} [options.multigraph=false] Indicates if the graph is a multigraph
+     *      @param {Boolean} [options.selfloops=false] Indicates if selfloops are allowed
      */
     function Graph(options) {
         if (options && !util.isObject(options)) {
@@ -591,6 +592,7 @@
 
         /**
          * The direction of the graph
+         * 
          * @private
          * @property _direction
          * @type sg.DIRECTION
@@ -599,6 +601,8 @@
         this._direction = options && options.direction ? options.direction : DIRECTION.UNDIRECTED;
 
         /**
+         * Indicates if the graph is a multigraph
+         * 
          * @private
          * @property _multigraph
          * @type Boolean
@@ -607,6 +611,10 @@
         this._multigraph  = options && options.multigraph  ? options.multigraph  : false;
 
         /**
+         * If true, adding a node with the same id as another one in the graph
+         * will override the old one.
+         * If false, an exception will be thrown.
+         * 
          * @property override
          * @type Boolean
          * @default false
@@ -614,6 +622,8 @@
         this.override  = options && options.override  ? options.override  : false;
 
         /**
+         * Indicates if selfloops are allowed
+         *             
          * @property selfloops
          * @type Boolean
          * @default false
@@ -622,6 +632,7 @@
         
         /**
          * Custom object for storing arbitrary data
+         * 
          * @property options
          * @type Object
          * @default {}
@@ -629,20 +640,24 @@
         this.options = options || {};
 
         /**
-         * A dictionary containing the graph nodes
-         * @private
+         * A dictionary containing the graph nodes.
+         * ***Use only for reading!***
+         * The purpose of this property is for fast reading. If you change
+         * some elements you may brake something with the graph.
+         * 
          * @property nodes
-         * @type buckets.Dictionary
-         * @readOnly
+         * @type buckets.Dictionary of String->sg.Node
          */
         this.nodes = new buckets.Dictionary();
 
         /**
-         * A set containing the graph edges
-         * @private
+         * A set containing the graph edges.
+         * ***Use only for reading!***
+         * The purpose of this property is for fast reading. If you change
+         * some elements you may brake something with the graph.
+         * 
          * @property edges
-         * @type buckets.Set
-         * @readOnly
+         * @type buckets.MultiBag of Edge
          */
         this.edges = new buckets.MultiBag(function(e) {
             return e._key;
@@ -651,6 +666,13 @@
         });
     }
 
+    /**
+     * Removes edge from the graph
+     *
+     * @private
+     * @method _removeEdge
+     * @param  {Edge|EdgeConnection} edge
+     */
     Graph.prototype._removeEdge = function(edge) {
         /*jshint expr:true */
         if (!(edge instanceof Edge) && !(edge instanceof EdgeConnection)) {
@@ -667,8 +689,13 @@
     };
 
     /**
+     * Add node to the graph
+     * 
      * @method addNode
      * @param {String|sg.Node} node
+     *                         If {String}, new sg.Node will be created with this
+     *                         string as its id, and will be added to the graph.
+     *                         If {sg.Node}, the node will be added to the graph.
      */
     Graph.prototype.addNode = function(node) {
         if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
@@ -692,8 +719,13 @@
     };
 
     /**
+     * Removes node from the graph
+     * 
      * @method removeNode
      * @param {String|sg.Node} node
+     *                         If {String}, the node with id the string will be
+     *                         removed from the graph.
+     *                         If {sg.Node}, the node will be removed from the graph.
      */
     Graph.prototype.removeNode = function(node) {
         if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
@@ -730,10 +762,15 @@
     };
 
     /**
+     * Creates an edge between two nodes
+     * 
      * @method connect
-     * @param {sg.Node|String} a
-     * @param {sg.Node|String} b
-     * @param {Object} [options]
+     * @param {sg.Node|String} source The source node (or its id)
+     * @param {sg.Node|String} target The target node (or its id)
+     * @param {Object} [options] optional options object passed to the Edge's
+     *                           constructor.
+     *                           See {{#crossLink "Edge"}}Edge{{/crossLink}}
+     *                           for more details.
      */
     Graph.prototype.connect = function(a, b, options) {
         /*jshint expr:true */
@@ -780,9 +817,15 @@
     };
 
     /**
+     * Removes ***all*** edges between two nodes.
+     * ***Be careful!*** This method does not differ directed edges, so calling this
+     * method with the nodes (a, b) will remove all edges (b, a) as well.
+     *
+     * **See also**: {{#crossLink "Edge/removeFromGraph"}}Edge.removeFromGraph{{/crossLink}} 
+     * 
      * @method detach
-     * @param {sg.Node|String} a
-     * @param {sg.Node|String} b
+     * @param {sg.Node|String} source The source node (or its id)
+     * @param {sg.Node|String} target The target node (or its id)
      */
     Graph.prototype.detach = function(a, b) {
         var aId = a._id || a;
@@ -802,10 +845,25 @@
         }
     };
 
+    /**
+     * Get node by its id
+     * 
+     * @param  {String} id The id of the wanted node
+     * @return {sg.Node}   The node itself
+     */
     Graph.prototype.getNode = function(id) {
         return this.nodes.get(id);
     };
 
+    /**
+     * Getter/setter for the graph's direction
+     *
+     * @chainable
+     * @param  {sg.DIRECTION} [direction] The new desired direction of the graph
+     * @return {sg.Graph|sg.DIRECTION}    If used as getter, will return the current graph's direction.
+     *                                    If used as setter, will return reference to *this* graph for
+     *                                    method chaining.
+     */
     Graph.prototype.direction = function(direction) {
         if (direction !== undefined) {
             if (!DIRECTION.isDirection(direction)) {
@@ -838,6 +896,16 @@
         return this._direction;
     };
 
+    /**
+     * Getter/setter for the graph's multigraph property
+     *
+     * @chainable
+     * @param  {Boolean} [multigraph] The new desired multigraph property
+     * @return {sg.Graph|Boolean}     If used as getter, will return the current multigraph property
+     *                                (e.g. Boolean).
+     *                                If used as setter, will return reference to *this* graph for
+     *                                method chaining.
+     */
     Graph.prototype.multigraph = function(multigraph) {
         if (multigraph !== undefined) {
             if (typeof multigraph !== "boolean") {
@@ -858,6 +926,16 @@
         return this._multigraph;
     };
 
+    /**
+     * Getter/setter for the graph's override property
+     *
+     * @chainable
+     * @param  {Boolean} [override] The new desired override property
+     * @return {sg.Graph|Boolean}   If used as getter, will return the current override property
+     *                              (e.g. Boolean).
+     *                              If used as setter, will return reference to *this* graph for
+     *                              method chaining.
+     */
     Graph.prototype.override = function(override) {
         if (override !== undefined) {
             if (typeof override !== "boolean") {
@@ -870,6 +948,16 @@
         return this.override;
     };
 
+    /**
+     * Getter/setter for the graph's selfloops property
+     *
+     * @chainable
+     * @param  {Boolean} [selfloops] The new desired selfloops property
+     * @return {sg.Graph|Boolean}    If used as getter, will return the current selfloops property
+     *                               (e.g. Boolean).
+     *                               If used as setter, will return reference to *this* graph for
+     *                               method chaining.
+     */
     Graph.prototype.selfloops = function(selfloops) {
         if (selfloops !== undefined) {
             if (typeof selfloops !== "boolean") {
@@ -911,7 +999,8 @@
     ConsoleRenderer.prototype = new AbstractRenderer();
 
     /**
-     * Simple Graph - a library for representing graphs
+     * Simple Graph - a library for manipulating graphs
+     * 
      * @module sg
      * @requires Buckets
      */

@@ -55,6 +55,7 @@ TODO
 Here are some things that you may contribute:
 
 - [ ] Add more unit tests
-- [ ] Add more documentation strings
+- [x] Add more documentation strings
 - [ ] Add comments where code gets nasty
 - [ ] Graph visualization renderer
+- [ ] Add some examples in the documentation
