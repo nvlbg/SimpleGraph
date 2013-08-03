@@ -59,3 +59,4 @@ Here are some things that you may contribute:
 - [ ] Add comments where code gets nasty
 - [x] <del>Graph visualization renderer</del> - [SimpleGraphViewer](https://github.com/nvlbg/SimpleGraphViewer)
 - [ ] Add some examples in the documentation
+- [ ] Extract my custom buckets.MultiBag into the library (+ add documentation for it)
