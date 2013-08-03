@@ -55,7 +55,7 @@
     };
     
     /**
-     * Enumeration for the direction property of a graph
+     * Enumeration for the direction property of a graph.
      * 
      * @class sg.DIRECTION
      * @static
@@ -110,7 +110,7 @@
     };
 
     /**
-     * Represents a graph node
+     * Represents a graph node.
      * 
      * @class sg.Node
      * @constructor
@@ -156,12 +156,12 @@
          * The purpose of this property is for fast reading. If you change
          * some elements you may brake something with the graph.
          * 
-         * **See also**: {{#crossLink "sg.Node/getEdges"}}sg.Node.getEdges{{/crossLink}}
+         * **See also**: {{#crossLink "sg.Node/getEdges"}}getEdges{{/crossLink}}
          * 
          * @property edges
          * @type buckets.MultiBag of EdgeConnection
          * @example
-         *     var edges = node.edges.size()
+         *     var count = node.edges.size()
          *     node.edges.forEach(function(edge) {
          *         console.log( edge.options.value );
          *     });
@@ -237,11 +237,11 @@
 
     /**
      * Adds the node in the passed graph. Shortcut for 
-     * {{#crossLink "sg.Graph/addNode"}}sg.Graph.addNode{{/crossLink}}
+     * *{{#crossLink "sg.Graph/addNode"}}sg.Graph.addNode{{/crossLink}}*
      * 
      * @method addToGraph
      * @param {sg.Graph} graph
-     * @return {sg.Node} reference to *this* node for method chaining
+     * @return {sg.Node} Reference to *this* node for method chaining
      * @chainable
      */
     Node.prototype.addToGraph = function(g) {
@@ -259,10 +259,10 @@
 
     /**
      * Removes the node from the graph containing him. Shortcut for 
-     * {{#crossLink "sg.Graph/removeNode"}}sg.Graph.removeNode{{/crossLink}}
+     * *{{#crossLink "sg.Graph/removeNode"}}sg.Graph.removeNode{{/crossLink}}*
      * 
      * @method removeFromGraph
-     * @return {sg.Node} reference to *this* node for method chaining
+     * @return {sg.Node} Reference to *this* node for method chaining
      * @chainable
      */
     Node.prototype.removeFromGraph = function() {
@@ -279,8 +279,8 @@
      * 
      * @method connect
      * @param {sg.Node|String} node The node you want to connect to this node
-     * @param {Object} [options] this object is passed to the Edge's constructor
-     * @return {sg.Node} reference to *this* node for method chaining
+     * @param {Object} [options] This object is passed to the Edge's constructor
+     * @return {sg.Node} Reference to *this* node for method chaining
      * @chainable
      */
     Node.prototype.connect = function(node, options) {
@@ -297,7 +297,7 @@
      * 
      * @method detach
      * @param {sg.Node|String} node The node you want to detach from this node
-     * @return {sg.Node} reference to *this* node for method chaining
+     * @return {sg.Node} Reference to *this* node for method chaining
      * @chainable
      */
     Node.prototype.detach = function(node) {
@@ -313,7 +313,7 @@
      * Getter for the node's identifier
      * 
      * @method getId
-     * @return {String} the node's identifier
+     * @return {String} The node's identifier
      */
     Node.prototype.getId = function() {
         return this._id;
@@ -324,7 +324,7 @@
      * Adding/removing elements from the array won't affect the graph.
      * 
      * @method getEdges
-     * @return {Array of EdgeConnection}
+     * @return {Array} Array of *EdgeConnection*s
      */
     Node.prototype.getEdges = function() {
         return this.edges.toArray();
@@ -332,7 +332,8 @@
 
     /**
      * Private class. Represents an edge (e.g. connection between 2 nodes). 
-     * ***It shouldn't be instanciated***
+     * 
+     * ***This class shouldn't be instanciated!***
      * 
      * @class Edge
      * @constructor
@@ -443,7 +444,7 @@
      * Getter for the source node
      * 
      * @method getSource
-     * @return {sg.Node} the source node of the edge
+     * @return {sg.Node} The source node of the edge
      */
     Edge.prototype.getSource = function() {
         return this._sourceNode;
@@ -453,7 +454,7 @@
      * Getter for the target node
      * 
      * @method getTarget
-     * @return {sg.Node} the target node of the edge
+     * @return {sg.Node} The target node of the edge
      */
     Edge.prototype.getTarget = function() {
         return this._targetNode;
@@ -464,7 +465,7 @@
      * 
      * @chainable
      * @method removeFromGraph
-     * @return {Edge} reference to *this* edge for method chaining
+     * @return {Edge} Reference to *this* edge for method chaining
      */
     Edge.prototype.removeFromGraph = function() {
         if (this._graph === undefined) {
@@ -479,10 +480,10 @@
      * Getter/setter for the edge's direction
      * 
      * @method directed
-     * @param {Boolean} [direction] the new direction of the edge
+     * @param {Boolean} [direction] The new direction of the edge
      * @return {Boolean|Edge}
-     *     If used as getter, returns whether or not the edge is directed
-     *     If used as setter, reference to *this* edge for method chaining
+     *     If used as getter, returns whether or not the edge is directed.
+     *     If used as setter, reference to *this* edge for method chaining.
      */
     Edge.prototype.directed = function(d) {
         if (d !== undefined) {
@@ -505,7 +506,8 @@
      * Private class. Represents a one-way edge,
      * so each node can store only what it needs.
      * Each edge has 2 EdgeConnections - one for each node.
-     * ***It shouldn't be instanciated***
+     * 
+     * ***This class shouldn't be instanciated!***
      * 
      * @class EdgeConnection
      * @constructor
@@ -554,14 +556,14 @@
     }
 
     /**
-     * Represents a graph
+     * Represents a graph.
      * 
      * @class sg.Graph
      * @constructor
      * @param {Object} [options] Optional data object the user can store in the graph.
      *                           You can use this object for setting these properties:
      *      @param {sg.DIRECTION} [options.direction=sg.DIRECTION.UNDIRECTED]
-     *                            the direction of the graph
+     *                            The direction of the graph
      *      @param {Boolean} [options.override=false]
      *                       If true, adding a node with the same id as another one in the graph
      *                       will override the old one.
@@ -651,7 +653,7 @@
         this.nodes = new buckets.Dictionary();
 
         /**
-         * A set containing the graph edges.
+         * The edges in the graph.
          * ***Use only for reading!***
          * The purpose of this property is for fast reading. If you change
          * some elements you may brake something with the graph.
@@ -692,10 +694,9 @@
      * Add node to the graph
      * 
      * @method addNode
-     * @param {String|sg.Node} node
-     *                         If {String}, new sg.Node will be created with this
-     *                         string as its id, and will be added to the graph.
-     *                         If {sg.Node}, the node will be added to the graph.
+     * @param {String|sg.Node} node 
+     *     If {String}, new sg.Node will be created with this string as its id, and will be added to the graph.
+     *     If {sg.Node}, the node will be added to the graph.
      */
     Graph.prototype.addNode = function(node) {
         if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
@@ -722,10 +723,9 @@
      * Removes node from the graph
      * 
      * @method removeNode
-     * @param {String|sg.Node} node
-     *                         If {String}, the node with id the string will be
-     *                         removed from the graph.
-     *                         If {sg.Node}, the node will be removed from the graph.
+     * @param {String|sg.Node} node 
+     *     If {String}, the node with id the string will be removed from the graph.
+     *     If {sg.Node}, the node will be removed from the graph.
      */
     Graph.prototype.removeNode = function(node) {
         if ((typeof node !== "string" || node === "") && !(node instanceof Node)) {
@@ -767,9 +767,9 @@
      * @method connect
      * @param {sg.Node|String} source The source node (or its id)
      * @param {sg.Node|String} target The target node (or its id)
-     * @param {Object} [options] optional options object passed to the Edge's
+     * @param {Object} [options] Optional options object passed to the Edge's
      *                           constructor.
-     *                           See {{#crossLink "Edge"}}Edge{{/crossLink}}
+     *                           See *{{#crossLink "Edge"}}Edge{{/crossLink}}*
      *                           for more details.
      */
     Graph.prototype.connect = function(a, b, options) {
@@ -821,7 +821,7 @@
      * ***Be careful!*** This method does not differ directed edges, so calling this
      * method with the nodes (a, b) will remove all edges (b, a) as well.
      *
-     * **See also**: {{#crossLink "Edge/removeFromGraph"}}Edge.removeFromGraph{{/crossLink}} 
+     * **See also**: *{{#crossLink "Edge/removeFromGraph"}}Edge.removeFromGraph{{/crossLink}}* 
      * 
      * @method detach
      * @param {sg.Node|String} source The source node (or its id)
@@ -847,7 +847,8 @@
 
     /**
      * Get node by its id
-     * 
+     *
+     * @method getNode
      * @param  {String} id The id of the wanted node
      * @return {sg.Node}   The node itself
      */
@@ -858,11 +859,12 @@
     /**
      * Getter/setter for the graph's direction
      *
+     * @method direction
      * @chainable
      * @param  {sg.DIRECTION} [direction] The new desired direction of the graph
-     * @return {sg.Graph|sg.DIRECTION}    If used as getter, will return the current graph's direction.
-     *                                    If used as setter, will return reference to *this* graph for
-     *                                    method chaining.
+     * @return {sg.Graph|sg.DIRECTION}
+     *     If used as getter, will return the current graph's direction.
+     *     If used as setter, will return reference to *this* graph for method chaining.
      */
     Graph.prototype.direction = function(direction) {
         if (direction !== undefined) {
@@ -899,12 +901,12 @@
     /**
      * Getter/setter for the graph's multigraph property
      *
+     * @method multigraph
      * @chainable
      * @param  {Boolean} [multigraph] The new desired multigraph property
-     * @return {sg.Graph|Boolean}     If used as getter, will return the current multigraph property
-     *                                (e.g. Boolean).
-     *                                If used as setter, will return reference to *this* graph for
-     *                                method chaining.
+     * @return {sg.Graph|Boolean}
+     *     If used as getter, will return the current multigraph property (e.g. Boolean).
+     *     If used as setter, will return reference to *this* graph for method chaining.
      */
     Graph.prototype.multigraph = function(multigraph) {
         if (multigraph !== undefined) {
@@ -929,12 +931,12 @@
     /**
      * Getter/setter for the graph's override property
      *
+     * @method override
      * @chainable
      * @param  {Boolean} [override] The new desired override property
-     * @return {sg.Graph|Boolean}   If used as getter, will return the current override property
-     *                              (e.g. Boolean).
-     *                              If used as setter, will return reference to *this* graph for
-     *                              method chaining.
+     * @return {sg.Graph|Boolean}
+     *     If used as getter, will return the current override property (e.g. Boolean).
+     *     If used as setter, will return reference to *this* graph for method chaining.
      */
     Graph.prototype.override = function(override) {
         if (override !== undefined) {
@@ -951,12 +953,12 @@
     /**
      * Getter/setter for the graph's selfloops property
      *
+     * @method selfloops
      * @chainable
      * @param  {Boolean} [selfloops] The new desired selfloops property
-     * @return {sg.Graph|Boolean}    If used as getter, will return the current selfloops property
-     *                               (e.g. Boolean).
-     *                               If used as setter, will return reference to *this* graph for
-     *                               method chaining.
+     * @return {sg.Graph|Boolean}
+     *     If used as getter, will return the current selfloops property (e.g. Boolean).
+     *     If used as setter, will return reference to *this* graph for method chaining.
      */
     Graph.prototype.selfloops = function(selfloops) {
         if (selfloops !== undefined) {
