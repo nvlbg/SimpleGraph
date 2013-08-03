@@ -55,7 +55,7 @@ TODO
 Here are some things that you may contribute:
 
 - [ ] Add more unit tests
-- [x] Add more documentation strings
+- [x] <s>Add more documentation strings</s>
 - [ ] Add comments where code gets nasty
-- [ ] Graph visualization renderer
+- [x] <s>Graph visualization renderer</s> - (https://github.com/nvlbg/SimpleGraphViewer)
 - [ ] Add some examples in the documentation
